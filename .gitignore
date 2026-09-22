@@ -1,0 +1,67 @@
+# Maven / Java
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
+
+# IntelliJ IDEA (local only — not shared)
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# VS Code / editors
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs
+*.log
+logs/
+
+# Local / runtime data
+/data/
+**/data/log/
+/docs/dev-ops/environment/data/
+/docs/dev-ops/environment/apollo/
+/docs/dev-ops/environment/loki/data/
+/docs/dev-ops/environment/grafana/data/
+/docs/dev-ops/app/log/
+
+# RocketMQ runtime data (keep conf / console config only)
+/docs/dev-ops/environment/rocketmq/data/logs/
+/docs/dev-ops/environment/rocketmq/data/rocketmq/store/
+/docs/dev-ops/environment/rocketmq/data/console/store/dashboard*.json

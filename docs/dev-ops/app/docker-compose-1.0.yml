@@ -1,0 +1,46 @@
+# /usr/local/bin/docker-compose -f /docs/dev-ops/environment/environment-docker-compose-2.4.yml up -d
+version: '3.8'
+# docker-compose -f docker-compose-1.0.yml up -d
+# 你需要修改system为你自身系统的仓库名
+#
+# Promtail 必须跑在写日志的机器上。可单独起（IDEA 跑 Java 时）：
+#   docker compose -f docs/dev-ops/app/docker-compose-1.0.yml up -d promtail
+# IDEA 本地日志目录：
+#   APP_LOG_DIR=../../../ticket-catalog-app/data/log docker compose -f docs/dev-ops/app/docker-compose-1.0.yml up -d promtail
+# 跨机 Loki：
+#   LOKI_URL=http://<中间件IP>:3100/loki/api/v1/push
+services:
+  x-api-app:
+    image: system/ticket-catalog:1.0.1
+    container_name: ticket-catalog
+    restart: on-failure
+    ports:
+      - "8091:8091"
+    environment:
+      - TZ=PRC
+      - SERVER_PORT=8091
+      - LOGGING_FILE_PATH=/data/log
+    volumes:
+      - ./log:/data/log
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # 采集本机 Java 文件日志，推到中间件机上的 Loki。不要和应用容器绑死，IDEA 本地也能单独起。
+  promtail:
+    image: grafana/promtail:3.4.2
+    container_name: promtail
+    restart: on-failure
+    command: -config.file=/etc/promtail/config.yml -config.expand-env=true
+    environment:
+      - LOKI_URL=${LOKI_URL:-http://host.docker.internal:3100/loki/api/v1/push}
+      - APP_NAME=${APP_NAME:-ticket-catalog}
+    volumes:
+      - ./promtail/config.yml:/etc/promtail/config.yml:ro
+      - ${APP_LOG_DIR:-./log}:/var/log/app:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "9080:9080"

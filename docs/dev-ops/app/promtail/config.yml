@@ -1,0 +1,36 @@
+# Promtail 必须跑在写日志的那台机器上。
+# LOKI_URL 默认指向本机中间件；跨机改成 http://<中间件IP>:3100/loki/api/v1/push
+# 只采集正在写入的 log_info.log（全量）。不要用 *.log，否则滚动归档会重复入库。
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: ${LOKI_URL}
+
+scrape_configs:
+  - job_name: java-app
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: java-app
+          app: ${APP_NAME}
+          __path__: /var/log/app/log_info.log
+    pipeline_stages:
+      - json:
+          expressions:
+            level: level
+            app_id: app_id
+            logger: logger
+            thread_name: thread_name
+            thread_id: thread_id
+            trace_id: trace_id
+            message: message
+      - labels:
+          level:
+          app_id:
+      # trace_id / thread_id / thread_name 基数高，只留在日志行里查，不做 Loki label

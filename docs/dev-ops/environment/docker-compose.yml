@@ -1,0 +1,314 @@
+# 命令执行 docker-compose up -d
+# 注意：./sql 只在 MySQL 数据目录为空时执行一次。新增 SQL 后必须清掉数据卷再 up，否则不会建库：
+# docker compose -f docs/dev-ops/environment/docker-compose.yml -p environment down -v
+# docker compose -f docs/dev-ops/environment/docker-compose.yml -p environment up -d
+version: '3.9'
+# 安装开发环境
+# 注册中心nacos：http://127.0.0.1:8848/nacos - 【账号：nacos 密码：nacos】
+# 配置中心apollo：http://127.0.0.1:8070 - 【账号：apollo 密码：admin】
+# 消息rocketmq：http://localhost:8080/#/ - 【账号：admin 密码：admin】
+# 任务调度xxl-job-admin：http://127.0.0.1:9090/xxl-job-admin/ - 【账号：admin 密码：123456】
+# 日志Grafana：http://127.0.0.1:3000 - 【账号：admin 密码：admin】数据源 Loki 已预置
+# 日志Loki：http://127.0.0.1:3100 （Promtail 推送，应用不直连）
+# 数据库mysql
+# 缓存redis
+services:
+  # 注册中心 https://github.com/nacos-group/nacos-docker - 其他配置可参考(集群)
+  # http://127.0.0.1:8848/nacos 【账号：nacos 密码：nacos】
+  nacos:
+    image: nacos/nacos-server:v2.2.3-slim
+    container_name: nacos
+    restart: always
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    environment:
+      - PREFER_HOST_MODE=hostname
+      - MODE=standalone
+      - SPRING_DATASOURCE_PLATFORM=mysql
+      - MYSQL_SERVICE_HOST=mysql
+      - MYSQL_SERVICE_DB_NAME=nacos_config
+      - MYSQL_SERVICE_PORT=3306
+      - MYSQL_SERVICE_USER=root
+      - MYSQL_SERVICE_PASSWORD=123456
+      - MYSQL_SERVICE_DB_PARAM=characterEncoding=utf8&connectTimeout=1000&socketTimeout=3000&autoReconnect=true&useSSL=false&allowPublicKeyRetrieval=true
+      - NACOS_AUTH_IDENTITY_KEY=2222
+      - NACOS_AUTH_IDENTITY_VALUE=2xxx
+      - NACOS_AUTH_TOKEN=SecretKey012345678901234567890123456789012345678901234567890123456789
+    networks:
+      - my-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  # http://127.0.0.1:9090/xxl-job-admin admin/123456 - 安装后稍等会访问即可
+  # 官网镜像为 xuxueli/xxl-job-admin:2.4.0 但不支持ARM架构【需要自己打包】，所以找了一个 kuschzzp/xxl-job-aarch64:2.4.0 镜像支持 AMD/ARM
+  xxl-job-admin:
+    image: xuxueli/xxl-job-admin:2.4.0
+    container_name: xxl-job-admin
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "9090:9090"
+    links:
+      - mysql
+    volumes:
+      - ./data/logs:/data/applogs
+      - ./data/xxl-job/:/xxl-job
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/xxl_job?serverTimezone=UTC&characterEncoding=utf8&autoReconnect=true&serverTimezone=Asia/Shanghai
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=123456
+      - SERVER_PORT=9090
+    networks:
+      - my-network
+
+  # MySQL 增加健康检测，避免
+  mysql:
+    image: mysql:8.0.32
+    container_name: mysql
+    hostname: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_USER: xfg
+      MYSQL_PASSWORD: 123456
+    networks:
+      - my-network
+    depends_on:
+      - mysql-job-dbdata
+    ports:
+      - "13306:3306"
+    volumes:
+      # 仅在 /var/lib/mysql 为空时执行一次；已有数据卷时新增 sql 不会自动导入
+      - ./sql:/docker-entrypoint-initdb.d
+    healthcheck:
+      # ping 通过不代表 initdb 跑完。Apollo/Nacos/XXL 必须等库建好再启动，否则会 Unknown database
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost && mysql -uroot -p123456 -e 'USE nacos_config; USE xxl_job; USE ApolloConfigDB; USE ApolloPortalDB;'" ]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.00'
+          memory: 512M
+    volumes_from:
+      - mysql-job-dbdata
+
+  # 自动加载数据
+  mysql-job-dbdata:
+    image: alpine:3.18.2
+    container_name: mysql-job-dbdata
+    volumes:
+      - /var/lib/mysql
+
+  # phpmyadmin https://hub.docker.com/_/phpmyadmin
+  phpmyadmin:
+    image: phpmyadmin:5.2.1
+    container_name: phpmyadmin
+    hostname: phpmyadmin
+    ports:
+      - 8899:80
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+      - MYSQL_ROOT_PASSWORD=123456
+    networks:
+      - my-network
+
+  # RedisAdmin https://github.com/joeferner/redis-commander
+  redis-admin:
+    image: spryker/redis-commander:0.8.0
+    container_name: redis-admin
+    hostname: redis-commander
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+      - HTTP_USER=admin
+      - HTTP_PASSWORD=admin
+    networks:
+      - my-network
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  # Redis
+  redis:
+    image: redis:7.2.0
+    container_name: redis
+    restart: always
+    hostname: redis
+    ports:
+      - 6379:6379
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - my-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Apollo 配置中心 https://github.com/apolloconfig/apollo
+  # Portal：http://127.0.0.1:8070 【账号：apollo 密码：admin】
+  # 本机应用连接：apollo.meta=http://127.0.0.1:8082，并设置 apollo.configService=http://127.0.0.1:8082
+  # 8080 已被 RocketMQ 控制台占用，configservice 映射到 8082。不配 configService 时 Eureka 会返回容器内网地址。
+  apollo-configservice:
+    image: apolloconfig/apollo-configservice:2.3.0
+    container_name: apollo-configservice
+    hostname: apollo-configservice
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./apollo/logs/configservice:/opt/logs
+    environment:
+      TZ: Asia/Shanghai
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ApolloConfigDB?characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 123456
+      EUREKA_INSTANCE_HOSTNAME: apollo-configservice
+      EUREKA_INSTANCE_IP_ADDRESS: apollo-configservice
+      JAVA_OPTS: -Deureka.instance.homePageUrl=http://apollo-configservice:8080
+    networks:
+      - my-network
+    # Java 进程起来不等于 Eureka 就绪；Portal 探活过早会报 No available admin server
+    healthcheck:
+      test: [ "CMD", "curl", "-fsS", "http://localhost:8080/health" ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 50s
+
+  apollo-adminservice:
+    image: apolloconfig/apollo-adminservice:2.3.0
+    container_name: apollo-adminservice
+    hostname: apollo-adminservice
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      apollo-configservice:
+        condition: service_healthy
+    ports:
+      - "8092:8090"
+    volumes:
+      - ./apollo/logs/adminservice:/opt/logs
+    environment:
+      TZ: Asia/Shanghai
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ApolloConfigDB?characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 123456
+      EUREKA_INSTANCE_HOSTNAME: apollo-adminservice
+      EUREKA_INSTANCE_IP_ADDRESS: apollo-adminservice
+      JAVA_OPTS: -Deureka.instance.homePageUrl=http://apollo-adminservice:8090 -Deureka.client.serviceUrl.defaultZone=http://apollo-configservice:8080/eureka/
+    networks:
+      - my-network
+    # /health UP 仍可能尚未注册到 Eureka，Portal 查的是 configservice 的 /services/admin
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -fsS http://localhost:8090/health && curl -fsS http://apollo-configservice:8080/services/admin | grep -q APOLLO-ADMINSERVICE" ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
+
+  apollo-portal:
+    image: apolloconfig/apollo-portal:2.3.0
+    container_name: apollo-portal
+    hostname: apollo-portal
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+      apollo-configservice:
+        condition: service_healthy
+      apollo-adminservice:
+        condition: service_healthy
+    ports:
+      - "8070:8070"
+    volumes:
+      - ./apollo/logs/portal:/opt/logs
+    environment:
+      TZ: Asia/Shanghai
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/ApolloPortalDB?characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 123456
+      APOLLO_PORTAL_ENVS: dev
+      DEV_META: http://apollo-configservice:8080
+    networks:
+      - my-network
+
+  # https://hub.docker.com/r/xuchengen/rocketmq
+  # 注意修改项；
+  # 01：data/rocketmq/conf/broker.conf 添加 brokerIP1=127.0.0.1
+  # 02：data/console/config/application.properties server.port=9009 - 如果8080端口被占用，可以修改或者添加映射端口
+  rocketmq:
+    image: livinphp/rocketmq:5.1.0
+    container_name: rocketmq
+    ports:
+      - 8080:8080
+      - 9876:9876
+      - 10909:10909
+      - 10911:10911
+      - 10912:10912
+    volumes:
+      - ./rocketmq/data:/home/app/data
+    environment:
+      TZ: "Asia/Shanghai"
+      NAMESRV_ADDR: "rocketmq:9876"
+
+  # 日志存储。Promtail 在应用机采集后推到这里，不必和 Java 同机。
+  # http://127.0.0.1:3100/ready
+  loki:
+    image: grafana/loki:3.4.2
+    container_name: loki
+    restart: always
+    command: -config.file=/etc/loki/loki-config.yml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - ./loki/data:/loki
+    # bind mount 在 Windows / 本机上常见权限问题，本地脚手架用 root
+    user: "0"
+    networks:
+      - my-network
+
+  # 日志查询。http://127.0.0.1:3000 【账号：admin 密码：admin】
+  grafana:
+    image: grafana/grafana:11.6.0
+    container_name: grafana
+    restart: always
+    depends_on:
+      - loki
+    ports:
+      - "3000:3000"
+    environment:
+      TZ: Asia/Shanghai
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - ./grafana/data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    user: "0"
+    networks:
+      - my-network
+
+networks:
+  my-network:
+    driver: bridge
