@@ -70,9 +70,9 @@ docs/dev-ops/environment/rocketmq/create-group.sh
 
 开发环境默认 `dev` profile，主要改这三个文件：
 
-1. `ticket-catalog-app/src/main/resources/application.yml`
-2. `ticket-catalog-app/src/main/resources/application-dev.yml`
-3. `ticket-catalog-app/src/main/resources/sharding/sharding-jdbc-dev.yaml`
+1. `ticket-catalog-start/src/main/resources/application.yml`
+2. `ticket-catalog-start/src/main/resources/application-dev.yml`
+3. `ticket-catalog-start/src/main/resources/sharding/sharding-jdbc-dev.yaml`
 
 **Apollo**（`application.yml`、`META-INF/app.properties`）
 
@@ -157,10 +157,10 @@ Java 用 Docker 部署时，`LOGGING_FILE_PATH=/data/log`，和 volume `./log:/d
 docker compose -f docs/dev-ops/app/docker-compose-1.0.yml up -d promtail
 ```
 
-IDEA 本机跑 Java 时，日志在 `ticket-catalog-app/data/log`，把目录指过去：
+IDEA 本机跑 Java 时，日志在 `ticket-catalog-start/data/log`，把目录指过去：
 
 ```shell
-APP_LOG_DIR=../../../ticket-catalog-app/data/log docker compose -f docs/dev-ops/app/docker-compose-1.0.yml up -d promtail
+APP_LOG_DIR=../../../ticket-catalog-start/data/log docker compose -f docs/dev-ops/app/docker-compose-1.0.yml up -d promtail
 ```
 
 Promtail 和 Loki 不在同一台时：
@@ -186,7 +186,7 @@ JSON 字段：`@timestamp`、`level`、`logger`、`thread_name`、`thread_id`、
 - `app` / `app_id` / `level`：Loki label
 - `trace_id` / `thread_id` / `thread_name`：高基数，只在日志行里 `| json` 过滤，不要做成 label
 
-`app_id` 来自 `ticket-catalog-app/src/main/resources/META-INF/app.properties` 的 `app.id`，和 Apollo AppId 同一份。改 AppId 时同步改这个文件。HTTP 请求会写 `trace_id`（有 `X-Trace-Id` 就沿用，没有就生成）；启动、MQ、Job 线程没有该字段。
+`app_id` 来自 `ticket-catalog-start/src/main/resources/META-INF/app.properties` 的 `app.id`，和 Apollo AppId 同一份。改 AppId 时同步改这个文件。HTTP 请求会写 `trace_id`（有 `X-Trace-Id` 就沿用，没有就生成）；启动、MQ、Job 线程没有该字段。启动类是 `ticket-catalog-start` 的 `com.owen.Application`。
 
 只采集正在写的 `log_info.log`（INFO 文件里也有 WARN/ERROR）。不要扫 `*.log`，滚动归档会重复入库。
 

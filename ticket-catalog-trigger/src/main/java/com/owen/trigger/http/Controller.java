@@ -1,6 +1,5 @@
 package com.owen.trigger.http;
 
-import com.owen.domain.xxx.service.XxxService;
 import com.owen.types.common.Constants;
 import com.owen.types.model.Response;
 import lombok.extern.slf4j.Slf4j;
@@ -17,9 +16,6 @@ public class Controller {
 
     @Resource
     private ThreadPoolExecutor threadPoolExecutor;
-
-    @Resource
-    private XxxService xxxService;
 
     /**
      * http://localhost:8090/success
@@ -42,19 +38,6 @@ public class Controller {
                 .code(Constants.ResponseCode.SUCCESS.getCode())
                 .info(Constants.ResponseCode.SUCCESS.getInfo())
                 .data("查询用户信息")
-                .build();
-    }
-
-    /**
-     * http://localhost:8091/apollo/demo
-     * 经领域服务读动态配置，不在 trigger 里直接碰 Apollo。
-     */
-    @RequestMapping("/apollo/demo")
-    public Response<String> apolloDemo() {
-        return Response.<String>builder()
-                .code(Constants.ResponseCode.SUCCESS.getCode())
-                .info(Constants.ResponseCode.SUCCESS.getInfo())
-                .data(xxxService.queryWelcome())
                 .build();
     }
 

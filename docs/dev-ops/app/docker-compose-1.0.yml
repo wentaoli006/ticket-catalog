@@ -6,7 +6,7 @@ version: '3.8'
 # Promtail 必须跑在写日志的机器上。可单独起（IDEA 跑 Java 时）：
 #   docker compose -f docs/dev-ops/app/docker-compose-1.0.yml up -d promtail
 # IDEA 本地日志目录：
-#   APP_LOG_DIR=../../../ticket-catalog-app/data/log docker compose -f docs/dev-ops/app/docker-compose-1.0.yml up -d promtail
+#   APP_LOG_DIR=../../../ticket-catalog-start/data/log docker compose -f docs/dev-ops/app/docker-compose-1.0.yml up -d promtail
 # 跨机 Loki：
 #   LOKI_URL=http://<中间件IP>:3100/loki/api/v1/push
 services:

@@ -14,6 +14,7 @@
         <module>ticket-catalog-trigger</module>
         <module>ticket-catalog-infrastructure</module>
         <module>ticket-catalog-types</module>
+        <module>ticket-catalog-start</module>
     </modules>
 
     <properties>
@@ -24,6 +25,7 @@
         <maven.compiler.release>25</maven.compiler.release>
         <!-- Boot 3.5.16 BOM 为 1.18.46；1.18.40 起官方支持 JDK 25，用最新补丁 -->
         <lombok.version>1.18.48</lombok.version>
+        <mapstruct.version>1.6.3</mapstruct.version>
     </properties>
 
     <licenses>
@@ -135,6 +137,16 @@
                 <artifactId>logstash-logback-encoder</artifactId>
                 <version>8.1</version>
             </dependency>
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct</artifactId>
+                <version>${mapstruct.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mapstruct</groupId>
+                <artifactId>mapstruct-processor</artifactId>
+                <version>${mapstruct.version}</version>
+            </dependency>
 
             <!-- 工程模块 -->
             <dependency>
@@ -160,6 +172,11 @@
             <dependency>
                 <groupId>com.owen</groupId>
                 <artifactId>ticket-catalog-api</artifactId>
+                <version>1.0.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.owen</groupId>
+                <artifactId>ticket-catalog-app</artifactId>
                 <version>1.0.1</version>
             </dependency>
         </dependencies>

@@ -60,6 +60,10 @@
             <groupId>com.owen</groupId>
             <artifactId>ticket-catalog-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.owen</groupId>
+            <artifactId>ticket-catalog-app</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
