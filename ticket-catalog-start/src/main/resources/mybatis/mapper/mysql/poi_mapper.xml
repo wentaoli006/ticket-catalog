@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.owen.infrastructure.dao.IPoiDao">
+
+    <resultMap id="dataMap" type="com.owen.infrastructure.dao.po.Poi">
+        <id column="id" property="id"/>
+        <result column="supplier_id" property="supplierId"/>
+        <result column="supplier_poi_name" property="supplierPoiName"/>
+        <result column="supplier_poi_address" property="supplierPoiAddress"/>
+        <result column="poi_id" property="poiId"/>
+        <result column="poi_name" property="poiName"/>
+        <result column="longitude" property="longitude"/>
+        <result column="latitude" property="latitude"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="columns">
+        id, supplier_id, supplier_poi_name, supplier_poi_address, poi_id, poi_name,
+        longitude, latitude, create_time, update_time
+    </sql>
+
+    <insert id="insert" parameterType="com.owen.infrastructure.dao.po.Poi" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO poi (
+            supplier_id, supplier_poi_name, supplier_poi_address, poi_id, poi_name,
+            longitude, latitude, create_time, update_time
+        ) VALUES (
+            #{supplierId}, #{supplierPoiName}, #{supplierPoiAddress}, #{poiId}, #{poiName},
+            #{longitude}, #{latitude}, now(), now()
+        )
+    </insert>
+
+    <update id="update" parameterType="com.owen.infrastructure.dao.po.Poi">
+        UPDATE poi
+        SET supplier_poi_name = #{supplierPoiName},
+            supplier_poi_address = #{supplierPoiAddress},
+            poi_name = #{poiName},
+            longitude = #{longitude},
+            latitude = #{latitude},
+            update_time = now()
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectById" parameterType="java.lang.Long" resultMap="dataMap">
+        SELECT <include refid="columns"/>
+        FROM poi
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectByPoiId" parameterType="java.lang.Long" resultMap="dataMap">
+        SELECT <include refid="columns"/>
+        FROM poi
+        WHERE poi_id = #{poiId}
+    </select>
+
+    <select id="selectBySupplierAndName" resultMap="dataMap">
+        SELECT <include refid="columns"/>
+        FROM poi
+        WHERE supplier_id = #{supplierId}
+          AND supplier_poi_name = #{supplierPoiName}
+        LIMIT 1
+    </select>
+
+    <select id="selectBySupplierId" parameterType="java.lang.Long" resultMap="dataMap">
+        SELECT <include refid="columns"/>
+        FROM poi
+        WHERE supplier_id = #{supplierId}
+    </select>
+
+</mapper>

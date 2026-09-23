@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.owen.infrastructure.dao.IApiSessionDao">
+
+    <resultMap id="dataMap" type="com.owen.infrastructure.dao.po.ApiSession">
+        <id column="id" property="id"/>
+        <result column="supplier_id" property="supplierId"/>
+        <result column="project_id" property="projectId"/>
+        <result column="supplier_session_id" property="supplierSessionId"/>
+        <result column="name" property="name"/>
+        <result column="session_start_time" property="sessionStartTime"/>
+        <result column="session_end_time" property="sessionEndTime"/>
+        <result column="sale_start_time" property="saleStartTime"/>
+        <result column="sale_end_time" property="saleEndTime"/>
+        <result column="real_name" property="realName"/>
+        <result column="seat_selection" property="seatSelection"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="columns">
+        id, supplier_id, project_id, supplier_session_id, name, session_start_time, session_end_time,
+        sale_start_time, sale_end_time, real_name, seat_selection, status, create_time, update_time
+    </sql>
+
+    <insert id="insert" parameterType="com.owen.infrastructure.dao.po.ApiSession" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO api_session (
+            supplier_id, project_id, supplier_session_id, name, session_start_time, session_end_time,
+            sale_start_time, sale_end_time, real_name, seat_selection, status, create_time, update_time
+        ) VALUES (
+            #{supplierId}, #{projectId}, #{supplierSessionId}, #{name}, #{sessionStartTime}, #{sessionEndTime},
+            #{saleStartTime}, #{saleEndTime}, #{realName}, #{seatSelection}, #{status}, now(), now()
+        )
+    </insert>
+
+    <update id="update" parameterType="com.owen.infrastructure.dao.po.ApiSession">
+        UPDATE api_session
+        SET project_id = #{projectId},
+            name = #{name},
+            session_start_time = #{sessionStartTime},
+            session_end_time = #{sessionEndTime},
+            sale_start_time = #{saleStartTime},
+            sale_end_time = #{saleEndTime},
+            real_name = #{realName},
+            seat_selection = #{seatSelection},
+            status = #{status},
+            update_time = now()
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectById" parameterType="java.lang.Long" resultMap="dataMap">
+        SELECT <include refid="columns"/>
+        FROM api_session
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectBySupplierSessionId" resultMap="dataMap">
+        SELECT <include refid="columns"/>
+        FROM api_session
+        WHERE supplier_id = #{supplierId}
+          AND supplier_session_id = #{supplierSessionId}
+    </select>
+
+    <select id="selectByProjectId" parameterType="java.lang.Long" resultMap="dataMap">
+        SELECT <include refid="columns"/>
+        FROM api_session
+        WHERE project_id = #{projectId}
+    </select>
+
+</mapper>

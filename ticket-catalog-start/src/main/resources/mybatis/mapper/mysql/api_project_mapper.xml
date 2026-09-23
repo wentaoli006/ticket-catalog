@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.owen.infrastructure.dao.IApiProjectDao">
+
+    <resultMap id="dataMap" type="com.owen.infrastructure.dao.po.ApiProject">
+        <id column="id" property="id"/>
+        <result column="supplier_id" property="supplierId"/>
+        <result column="supplier_project_id" property="supplierProjectId"/>
+        <result column="poi_id" property="poiId"/>
+        <result column="name" property="name"/>
+        <result column="poster_url" property="posterUrl"/>
+        <result column="ticket_notice" property="ticketNotice"/>
+        <result column="sale_status" property="saleStatus"/>
+        <result column="real_name" property="realName"/>
+        <result column="seat_selection" property="seatSelection"/>
+        <result column="timezone" property="timezone"/>
+        <result column="earliest_session_start_time" property="earliestSessionStartTime"/>
+        <result column="latest_session_start_time" property="latestSessionStartTime"/>
+        <result column="stock_mode" property="stockMode"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <sql id="columns">
+        id, supplier_id, supplier_project_id, poi_id, name, poster_url, ticket_notice,
+        sale_status, real_name, seat_selection, timezone, earliest_session_start_time, latest_session_start_time,
+        stock_mode, create_time, update_time
+    </sql>
+
+    <insert id="insert" parameterType="com.owen.infrastructure.dao.po.ApiProject" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO api_project (
+            supplier_id, supplier_project_id, poi_id, name, poster_url, ticket_notice,
+            sale_status, real_name, seat_selection, timezone, earliest_session_start_time, latest_session_start_time,
+            stock_mode, create_time, update_time
+        ) VALUES (
+            #{supplierId}, #{supplierProjectId}, #{poiId}, #{name}, #{posterUrl}, #{ticketNotice},
+            #{saleStatus}, #{realName}, #{seatSelection}, #{timezone}, #{earliestSessionStartTime}, #{latestSessionStartTime},
+            #{stockMode}, now(), now()
+        )
+    </insert>
+
+    <update id="update" parameterType="com.owen.infrastructure.dao.po.ApiProject">
+        UPDATE api_project
+        SET poi_id = #{poiId},
+            name = #{name},
+            poster_url = #{posterUrl},
+            ticket_notice = #{ticketNotice},
+            sale_status = #{saleStatus},
+            real_name = #{realName},
+            seat_selection = #{seatSelection},
+            timezone = #{timezone},
+            earliest_session_start_time = #{earliestSessionStartTime},
+            latest_session_start_time = #{latestSessionStartTime},
+            stock_mode = #{stockMode},
+            update_time = now()
+        WHERE id = #{id}
+    </update>
+
+    <select id="selectById" parameterType="java.lang.Long" resultMap="dataMap">
+        SELECT <include refid="columns"/>
+        FROM api_project
+        WHERE id = #{id}
+    </select>
+
+    <select id="selectBySupplierProjectId" resultMap="dataMap">
+        SELECT <include refid="columns"/>
+        FROM api_project
+        WHERE supplier_id = #{supplierId}
+          AND supplier_project_id = #{supplierProjectId}
+    </select>
+
+    <select id="selectBySupplierId" parameterType="java.lang.Long" resultMap="dataMap">
+        SELECT <include refid="columns"/>
+        FROM api_project
+        WHERE supplier_id = #{supplierId}
+    </select>
+
+</mapper>
