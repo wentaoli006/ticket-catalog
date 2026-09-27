@@ -1,8 +1,5 @@
-# 票务分销上架 - API 原始数据表
-# 供应商接入上下文，只存原始数据，不聚合、不上架。
-
-CREATE database if NOT EXISTS `ticket_catalog` default character set utf8mb4 collate utf8mb4_0900_ai_ci;
-use `ticket_catalog`;
+# 已迁移到 ticket_dist_db.sql。本文件不再建库，避免和 ticket_dist_db 重复建表。
+# 供应商接入上下文的表：supplier / poi / api_project / api_session / api_ticket_item，见 ticket_dist_db.sql。
 
 # ------------------------------------------------------------
 # supplier 供应商

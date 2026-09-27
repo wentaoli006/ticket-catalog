@@ -43,7 +43,7 @@ public interface CheckoutService {
 
 自检：Cyclomatic Complexity 应尽量等于 1（除了 precondition 式的中断判断，如库存不足直接抛异常）；不能有任何金额/业务计算（这类计算应该是 Entity 的方法或计算属性）；不能有分支型 if-else 业务判断（应下沉到 Domain Service/Policy）。
 
-常见套路三步：**准备数据（查 Repository/ACL）→ 执行操作（纯内存调用领域对象方法）→ 持久化（Repository.save + 发消息）**。
+常见套路三步：**准备数据（查 Repository/Port）→ 执行操作（纯内存调用领域对象方法）→ 持久化（Repository.save + 发消息）**。
 
 **出参永远是 DTO，不能是 Entity**：
 - 避免调用方直接依赖 Entity 里的业务规则。
@@ -64,18 +64,18 @@ public interface OrderDtoAssembler {
 
 Application/Domain/Infrastructure 层**直接抛异常，不用 `Result` 包装**，只有 Interface 层统一兜底转换。
 
-## 防腐层 ACL（本项目：`ticket-catalog-infrastructure/gateway`）
+## 防腐层（本项目：domain `adapter.port` + infrastructure `adapter.port`）
 
-任何对外部系统（供应商 API、别的团队的 RPC 服务、第三方 SDK）的依赖，必须经过 ACL Facade 隔离，禁止 Application/Domain 直接引用对方的 DO/SDK 类型。
+任何对外部系统（供应商 API、别的团队的 RPC 服务、第三方 SDK）的依赖，必须经过出站端口隔离，禁止 Application/Domain 直接引用对方的 DO/SDK 类型。
 
 ```
-无 ACL：ApplicationService → 直接依赖 ExternalItemService + ItemDO（外部字段一变，业务代码就得改）
-有 ACL：ApplicationService → ItemFacade（自定义 ItemDTO） → ExternalItemService
+无端口：ApplicationService → 直接依赖 ExternalItemService + ItemDO（外部字段一变，业务代码就得改）
+有端口：ApplicationService → IXxxPort（领域自己的值对象） → Adapter 实现
 ```
 
-ACL 能承载的能力：适配器（转换对方的数据结构/协议）、缓存、兜底（对方挂了返回缓存或默认值）、功能开关、易于 mock 测试。**Repository 本质上就是面向数据持久化的一种 ACL**。
+端口实现能承载的能力：适配器（转换对方的数据结构/协议）、缓存、兜底（对方挂了返回缓存或默认值）、功能开关、易于 mock 测试。**Repository 本质上就是面向数据持久化的一种端口。**
 
-> 术语对照：Ports and Adapters（六边形架构）里把这类"domain 定义接口、infrastructure 提供实现"的东西叫 **Port**（domain 里的接口）+ **Adapter**（infrastructure 里的实现），和本文的 ACL/Facade 是同一个模式的两种叫法。本项目统一用"Facade"，看到别处资料写 Port/Adapter，对应到本项目就是"ACL 接口/ACL 实现"。
+> 术语对照：Ports and Adapters（六边形架构）里把这类"domain 定义接口、infrastructure 提供实现"的东西叫 **Port** + **Adapter**。本项目代码落地：接口放 `domain.{context}.adapter.port`（如 `IPoiPort`），实现放 `infrastructure.adapter.port`。资料里的 ACL/Facade 是同一模式的另一种叫法。
 
 ## Orchestration vs Choreography（复杂流程怎么设计）
 

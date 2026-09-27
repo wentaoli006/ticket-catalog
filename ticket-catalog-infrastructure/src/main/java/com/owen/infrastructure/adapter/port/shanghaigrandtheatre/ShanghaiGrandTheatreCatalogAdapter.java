@@ -1,6 +1,6 @@
 package com.owen.infrastructure.adapter.port.shanghaigrandtheatre;
 
-import com.owen.domain.supplier.acl.SupplierCatalogPort;
+import com.owen.domain.supplier.adapter.port.ISupplierCatalogPort;
 import com.owen.domain.supplier.model.valobj.RawProject;
 import com.owen.domain.supplier.model.valobj.RawSession;
 import com.owen.domain.supplier.model.valobj.RawTicketItem;
@@ -21,7 +21,7 @@ import java.util.List;
  * 上海大剧院原始数据适配。协议字段到这里为止，领域只看值对象。
  */
 @Component
-public class ShanghaiGrandTheatreCatalogAdapter implements SupplierCatalogPort {
+public class ShanghaiGrandTheatreCatalogAdapter implements ISupplierCatalogPort {
 
     private static final DateTimeFormatter TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final ZoneId ZONE = ZoneId.of("Asia/Shanghai");

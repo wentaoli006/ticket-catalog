@@ -1,6 +1,6 @@
 package com.owen.infrastructure.adapter.port;
 
-import com.owen.domain.supplier.acl.PoiPort;
+import com.owen.domain.supplier.adapter.port.IPoiPort;
 import com.owen.types.exception.AppException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
  */
 @Slf4j
 @Component
-public class MockPoiRpc implements PoiPort {
+public class MockPoiRpc implements IPoiPort {
 
     @Override
     public Long apply(String supplierName, String supplierProjectId) {

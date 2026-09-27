@@ -88,7 +88,7 @@ services:
       - ./sql:/docker-entrypoint-initdb.d
     healthcheck:
       # ping 通过不代表 initdb 跑完。Apollo/Nacos/XXL 必须等库建好再启动，否则会 Unknown database
-      test: [ "CMD-SHELL", "mysqladmin ping -h localhost && mysql -uroot -p123456 -e 'USE nacos_config; USE xxl_job; USE ApolloConfigDB; USE ApolloPortalDB;'" ]
+      test: [ "CMD-SHELL", "mysqladmin ping -h localhost && mysql -uroot -p123456 -e 'USE nacos_config; USE xxl_job; USE ApolloConfigDB; USE ApolloPortalDB; USE ticket_dist_db;'" ]
       interval: 5s
       timeout: 10s
       retries: 20

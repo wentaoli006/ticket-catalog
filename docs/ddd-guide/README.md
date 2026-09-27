@@ -8,7 +8,7 @@
 2. [六边形分层架构](02-hexagonal-architecture.md) —— 模块依赖方向、每层职责、和本项目模块的对应关系
 3. [Repository 模式](03-repository-pattern.md) —— Entity/DO/DTO 三对象规范、Repository 接口写法、变更追踪
 4. [领域层设计规范](04-domain-layer.md) —— Entity / Domain Service / Policy / Domain Event 怎么选、聚合一致性边界、工厂
-5. [应用层与防腐层](05-application-layer.md) —— Interface 层、CQE、DTO Assembler、ACL、Orchestration vs Choreography
+5. [应用层与防腐层](05-application-layer.md) —— Interface 层、CQE、DTO Assembler、出站端口、Orchestration vs Choreography
 6. [战略设计](06-strategic-design.md) —— 限界上下文（本项目的 5 个上下文）、跨上下文通信规则、通用语言、充血模型 vs 贫血模型
 
 ## 速查：新需求该往哪里写代码
@@ -25,7 +25,7 @@
 | 启动类、Spring 配置、yml | 组合根 | `ticket-catalog-start` |
 | 对外暴露的 DTO/Command/Query 类型 | DTO/CQE | `ticket-catalog-api` |
 | 数据库读写、字段映射 | Repository 实现 + DO | `ticket-catalog-infrastructure` |
-| 调用外部服务/中间件 | ACL / Facade | `ticket-catalog-infrastructure` |
+| 调用外部服务/中间件 | 出站端口 Adapter | `ticket-catalog-infrastructure` |
 | 需要用到别的限界上下文（如 SupplierContext）的数据 | 事件订阅或查对方 ApplicationService 拿 DTO，禁止直连对方 Entity/Repository | 见 06 战略设计 |
 
 ## 铁律（贯穿全部层级）
@@ -35,5 +35,5 @@
 - **Entity 不能有 public setter**，状态变更只能通过带业务语义的方法（`pay()`、`ship()`），且方法内部要保证不变性（Invariant）。
 - **ApplicationService 只编排，不做计算、不写 if/else 业务判断**：校验用 Bean Validation 前置，计算下沉到 Entity/DomainService/Policy。
 - **Interface 层统一返回 `Result` 并兜底捕获所有异常；Application/Domain/Infrastructure 层直接抛异常，不用 `Result` 包装。**
-- **外部依赖（供应商 API、中间件、别的团队的服务）必须过 ACL/Facade**，禁止在 Domain/Application 直接引用对方的 DO/DTO/SDK 类型。
+- **外部依赖（供应商 API、中间件、别的团队的服务）必须过 `adapter.port`**，禁止在 Domain/Application 直接引用对方的 DO/DTO/SDK 类型。
 - **禁止跨限界上下文直接引用对方的 Entity/Repository**（如 OfflineProductContext 不能 import ProductAggContext 的 `ApiProduct`），只能走事件或查对方 DTO，详见 06 战略设计。

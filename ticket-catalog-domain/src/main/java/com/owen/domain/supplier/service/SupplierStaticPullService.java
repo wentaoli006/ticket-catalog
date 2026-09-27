@@ -1,7 +1,7 @@
 package com.owen.domain.supplier.service;
 
-import com.owen.domain.supplier.acl.PoiPort;
-import com.owen.domain.supplier.acl.SupplierCatalogPort;
+import com.owen.domain.supplier.adapter.port.IPoiPort;
+import com.owen.domain.supplier.adapter.port.ISupplierCatalogPort;
 import com.owen.domain.supplier.model.aggregate.ApiProjectAggregate;
 import com.owen.domain.supplier.model.entity.ApiSession;
 import com.owen.domain.supplier.model.entity.Poi;
@@ -25,13 +25,13 @@ public class SupplierStaticPullService {
 
     private static final String ERR_NO_PORT = "SUPPLIER_PORT_MISSING";
 
-    private final List<SupplierCatalogPort> catalogPorts;
-    private final PoiPort poiPort;
+    private final List<ISupplierCatalogPort> catalogPorts;
+    private final IPoiPort poiPort;
     private final IApiProjectRepository projectRepository;
     private final IPoiRepository poiRepository;
 
-    public SupplierStaticPullService(List<SupplierCatalogPort> catalogPorts,
-                                     PoiPort poiPort,
+    public SupplierStaticPullService(List<ISupplierCatalogPort> catalogPorts,
+                                     IPoiPort poiPort,
                                      IApiProjectRepository projectRepository,
                                      IPoiRepository poiRepository) {
         this.catalogPorts = catalogPorts;
@@ -44,7 +44,7 @@ public class SupplierStaticPullService {
      * 只拉项目。新项目申请 POI 后落库，已有项目只刷新项目字段，不动场次和票品。
      */
     public void pullProjects(SupplierEnum supplier) {
-        SupplierCatalogPort port = portOf(supplier);
+        ISupplierCatalogPort port = portOf(supplier);
         for (RawProject raw : port.listProjects()) {
             projectRepository.find(supplier.getId(), raw.supplierProjectId())
                     .ifPresentOrElse(
@@ -57,7 +57,7 @@ public class SupplierStaticPullService {
      * 按已落库项目逐个拉场次和票品。本次没返回的下级停售，不物理删除。
      */
     public void pullChildren(SupplierEnum supplier) {
-        SupplierCatalogPort port = portOf(supplier);
+        ISupplierCatalogPort port = portOf(supplier);
         for (ApiProjectAggregate project : projectRepository.findWithChildren(supplier.getId())) {
             List<RawSession> sessions = port.listSessions(project.getSupplierProjectId(), project.isSeatSelection());
             project.syncSessions(sessions);
@@ -97,7 +97,7 @@ public class SupplierStaticPullService {
         projectRepository.save(project);
     }
 
-    private SupplierCatalogPort portOf(SupplierEnum supplier) {
+    private ISupplierCatalogPort portOf(SupplierEnum supplier) {
         return catalogPorts.stream()
                 .filter(port -> port.supplier() == supplier)
                 .findFirst()

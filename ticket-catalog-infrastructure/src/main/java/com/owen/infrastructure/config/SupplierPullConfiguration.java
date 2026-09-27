@@ -1,7 +1,7 @@
 package com.owen.infrastructure.config;
 
-import com.owen.domain.supplier.acl.PoiPort;
-import com.owen.domain.supplier.acl.SupplierCatalogPort;
+import com.owen.domain.supplier.adapter.port.IPoiPort;
+import com.owen.domain.supplier.adapter.port.ISupplierCatalogPort;
 import com.owen.domain.supplier.repository.IApiProjectRepository;
 import com.owen.domain.supplier.repository.IPoiRepository;
 import com.owen.domain.supplier.service.SupplierStaticPullService;
@@ -17,8 +17,8 @@ import java.util.List;
 public class SupplierPullConfiguration {
 
     @Bean
-    public SupplierStaticPullService supplierStaticPullService(List<SupplierCatalogPort> catalogPorts,
-                                                                PoiPort poiPort,
+    public SupplierStaticPullService supplierStaticPullService(List<ISupplierCatalogPort> catalogPorts,
+                                                                IPoiPort poiPort,
                                                                 IApiProjectRepository projectRepository,
                                                                 IPoiRepository poiRepository) {
         return new SupplierStaticPullService(catalogPorts, poiPort, projectRepository, poiRepository);

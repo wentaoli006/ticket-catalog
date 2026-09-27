@@ -99,11 +99,17 @@ public class ApiSession {
                 .forEach(ApiTicketItem::stopSale);
     }
 
-    void bindProject(Long projectId) {
+    /**
+     * 回填所属项目。只由聚合根在同步场次或拿到项目主键后调用。
+     */
+    public void bindProject(Long projectId) {
         this.projectId = projectId;
     }
 
-    void assignId(Long id) {
+    /**
+     * 回填场次主键，并同步到下属票品。只由聚合根在落库后调用。
+     */
+    public void assignId(Long id) {
         this.id = id;
         ticketItems.values().forEach(item -> item.bindSession(id));
     }

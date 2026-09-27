@@ -28,6 +28,19 @@ dataSources:
     maxPoolSize: 15
     minPoolSize: 5
 
+  # 票务分销库。supplier / poi / api_project / api_session / api_ticket_item 不分片，走 SINGLE 默认库。
+  ticket_dist_db:
+    dataSourceClassName: com.zaxxer.hikari.HikariDataSource
+    driverClassName: com.mysql.cj.jdbc.Driver
+    jdbcUrl: jdbc:mysql://127.0.0.1:13306/ticket_dist_db?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
+    username: root
+    password: 123456
+    connectionTimeoutMilliseconds: 30000
+    idleTimeoutMilliseconds: 60000
+    maxLifetimeMilliseconds: 1800000
+    maxPoolSize: 15
+    minPoolSize: 5
+
 rules:
   - !SHARDING
     # 库的路由
@@ -56,6 +69,12 @@ rules:
         type: INLINE
         props:
           algorithm-expression: user_order_$->{(user_id.hashCode() ^ (user_id.hashCode()) >>> 16) & (4 - 1)}
+
+  # 未在 SHARDING 里登记的表默认落到 ticket_dist_db，不再按 user_id 分库。
+  - !SINGLE
+    tables:
+      - ticket_dist_db.*
+    defaultDataSource: ticket_dist_db
 
 props:
   # 是否在日志中打印 SQL。

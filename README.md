@@ -27,7 +27,7 @@ docker compose -f docs/dev-ops/environment/docker-compose.yml up -d
 
 | 组件 | 地址 | 默认账密 / 标识 |
 | --- | --- | --- |
-| MySQL | `127.0.0.1:13306` | root / 123456，库 `demo_db_00`、`demo_db_01` |
+| MySQL | `127.0.0.1:13306` | root / 123456，分片库 `demo_db_00`、`demo_db_01`，分销库 `ticket_dist_db` |
 | Redis | `127.0.0.1:6379` | 密码 `123456` |
 | Nacos（Dubbo 注册） | `nacos://127.0.0.1:8848` | 无额外账密 |
 | Apollo Config | `http://127.0.0.1:8082` | AppId `100000001` |
