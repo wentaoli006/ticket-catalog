@@ -110,12 +110,6 @@
                 <artifactId>redisson-spring-boot-starter</artifactId>
                 <version>3.52.0</version>
             </dependency>
-            <!-- 5.5.3 的 shardingsphere-jdbc 把 sharding-core / classpath URL 收成 test scope，不能当 JDBC 驱动用 -->
-            <dependency>
-                <groupId>org.apache.shardingsphere</groupId>
-                <artifactId>shardingsphere-jdbc</artifactId>
-                <version>5.5.2</version>
-            </dependency>
             <dependency>
                 <groupId>com.xuxueli</groupId>
                 <artifactId>xxl-job-core</artifactId>

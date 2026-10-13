@@ -44,7 +44,7 @@
 | Interface（接口层） | `ticket-catalog-trigger`（`http` / `job` / `listener` / `rpc`） | Controller、Job、MQ Listener、RPC Provider；鉴权、Result 包装、异常兜底 | 依赖 `app` |
 | DTO/CQE 类型 | `ticket-catalog-api` | 对外的 Command / Query / Event / DTO，按上下文分包 | 依赖 `types` |
 | Infrastructure（基础设施层） | `ticket-catalog-infrastructure`（`adapter` / `dao` / `redis`） | Repository 实现、DAO/PO、出站端口实现、缓存 | 依赖 `domain`（实现其接口） |
-| 启动（组合根） | `ticket-catalog-start` | `Application`、Spring 配置(`config`)、yml、logback、mybatis-config、sharding | 依赖 `trigger`、`infrastructure`，不写业务 |
+| 启动（组合根） | `ticket-catalog-start` | `Application`、Spring 配置(`config`)、yml、logback、mybatis-config | 依赖 `trigger`、`infrastructure`，不写业务 |
 
 落地时的判断顺序：
 1. 先在 `domain` 里定义 Entity 和它依赖的 Repository/`adapter.port` **接口**（不管实现）。

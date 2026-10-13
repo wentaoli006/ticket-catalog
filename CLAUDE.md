@@ -17,7 +17,7 @@ ticket-catalog-start → ticket-catalog-trigger → ticket-catalog-app → ticke
 - `ticket-catalog-api`：对外的 DTO / Command / Query 类型。
 - `ticket-catalog-trigger`：`http`/`job`/`listener`/`rpc` 入口，统一返回 `Result`，兜底捕获异常。依赖 `app`，入口只调 ApplicationService。
 - `ticket-catalog-infrastructure`：`dao`（DAO 接口与 `dao/po` 表对象）、`adapter/repository`（Repository 实现）、`adapter/port`（出站端口实现）、`redis`。
-- `ticket-catalog-start`：组合根。`Application` 启动类、`config`、`application*.yml`、logback、mybatis-config、sharding。依赖 `trigger` + `infrastructure`，不写业务。
+- `ticket-catalog-start`：组合根。`Application` 启动类、`config`、`application*.yml`、logback、mybatis-config。依赖 `trigger` + `infrastructure`，不写业务。
 
 ## 编码规范（详见 `docs/ddd-guide/`，写代码前先看对应章节）
 

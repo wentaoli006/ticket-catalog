@@ -12,11 +12,20 @@ thread:
         block-queue-size: 5000
         policy: CallerRunsPolicy
 
-# 数据库配置 - sharding-jdbc 分库分表
+# 数据库配置 - 单库单表 ticket_dist_db
 spring:
   datasource:
-    driver-class-name: org.apache.shardingsphere.driver.ShardingSphereDriver
-    url: jdbc:shardingsphere:classpath:sharding/sharding-jdbc-dev.yaml
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:13306/ticket_dist_db?useUnicode=true&characterEncoding=utf8&autoReconnect=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC&useSSL=true
+    username: root
+    password: 123456
+    hikari:
+      pool-name: TicketCatalogHikariCP
+      minimum-idle: 5
+      maximum-pool-size: 15
+      idle-timeout: 60000
+      max-lifetime: 1800000
+      connection-timeout: 30000
 
 mybatis:
   mapper-locations: classpath*:mybatis/mapper/**/*.xml

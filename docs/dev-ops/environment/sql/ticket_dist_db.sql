@@ -1,6 +1,5 @@
 # 票务分销上架 - API 原始数据表
-# 供应商接入上下文，只存原始数据，不聚合、不上架。
-# 库 ticket_dist_db 不参与分片，由 sharding-jdbc-dev.yaml 的 SINGLE 规则默认路由。
+# 供应商接入上下文，只存原始数据，不聚合、不上架。单库单表。
 
 CREATE database if NOT EXISTS `ticket_dist_db` default character set utf8mb4 collate utf8mb4_0900_ai_ci;
 use `ticket_dist_db`;

@@ -27,7 +27,7 @@ docker compose -f docs/dev-ops/environment/docker-compose.yml up -d
 
 | 组件 | 地址 | 默认账密 / 标识 |
 | --- | --- | --- |
-| MySQL | `127.0.0.1:13306` | root / 123456，分片库 `demo_db_00`、`demo_db_01`，分销库 `ticket_dist_db` |
+| MySQL | `127.0.0.1:13306` | root / 123456，库 `ticket_dist_db` |
 | Redis | `127.0.0.1:6379` | 密码 `123456` |
 | Nacos（Dubbo 注册） | `nacos://127.0.0.1:8848` | 无额外账密 |
 | Apollo Config | `http://127.0.0.1:8082` | AppId `100000001` |
@@ -68,11 +68,10 @@ docs/dev-ops/environment/rocketmq/create-group.sh
 
 ### 2.2 改应用连接
 
-开发环境默认 `dev` profile，主要改这三个文件：
+开发环境默认 `dev` profile，主要改这两个文件：
 
 1. `ticket-catalog-start/src/main/resources/application.yml`
 2. `ticket-catalog-start/src/main/resources/application-dev.yml`
-3. `ticket-catalog-start/src/main/resources/sharding/sharding-jdbc-dev.yaml`
 
 **Apollo**（`application.yml`、`META-INF/app.properties`）
 
@@ -118,16 +117,15 @@ xxl.job.admin.addresses: http://localhost:9090/xxl-job-admin
 xxl.job.executor.appname: xxl-job-executor-sample
 ```
 
-**MySQL**（`sharding/sharding-jdbc-dev.yaml`）
+**MySQL**（`application-dev.yml`）
 
 ```yaml
-ds_0.jdbcUrl: jdbc:mysql://127.0.0.1:13306/demo_db_00?...
-ds_0.username: root
-ds_0.password: 123456
-ds_1.jdbcUrl: jdbc:mysql://127.0.0.1:13306/demo_db_01?...
+spring.datasource.url: jdbc:mysql://127.0.0.1:13306/ticket_dist_db?...
+spring.datasource.username: root
+spring.datasource.password: 123456
 ```
 
-改库名时同步改 `docs/dev-ops/environment/sql/demo_db_00.sql`、`demo_db_01.sql`，以及 compose 里 MySQL healthcheck 的库名。
+改库名时同步改 `docs/dev-ops/environment/sql/ticket_dist_db.sql`，以及 compose 里 MySQL healthcheck 的库名。
 
 `application-test.yml` / `application-prod.yml` 的数据源默认注释掉，上测试/生产时按同样字段打开。
 
