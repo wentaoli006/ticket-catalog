@@ -1,6 +1,8 @@
 package com.owen.infrastructure.adapter.port.shanghaigrandtheatre;
 
 import com.owen.domain.supplier.adapter.port.ISupplierCatalogPort;
+import com.owen.domain.supplier.model.aggregate.ApiProjectAggregate;
+import com.owen.domain.supplier.model.entity.ApiSession;
 import com.owen.domain.supplier.model.valobj.RawProject;
 import com.owen.domain.supplier.model.valobj.RawSession;
 import com.owen.domain.supplier.model.valobj.RawTicketItem;
@@ -47,8 +49,26 @@ public class ShanghaiGrandTheatreCatalogAdapter implements ISupplierCatalogPort 
         return projects;
     }
 
+    /**
+     * 上海大剧院的下级是场次，场次下面是票品。别的供应商不要照这个顺序。
+     */
     @Override
-    public List<RawSession> listSessions(String supplierProjectId, boolean seatSelection) {
+    public void pullChildren(ApiProjectAggregate project) {
+        List<RawSession> sessions = listSessions(project.getSupplierProjectId(), project.isSeatSelection());
+        project.syncSessions(sessions);
+        for (RawSession rawSession : sessions) {
+            ApiSession session = project.getSessions().stream()
+                    .filter(item -> item.getSupplierSessionId().equals(rawSession.supplierSessionId()))
+                    .findFirst()
+                    .orElseThrow();
+            session.syncTicketItems(listTicketItems(rawSession.supplierSessionId(), rawSession.maxSaleQty()));
+            if (session.getStatus() == SaleStatusEnum.OFF_SALE) {
+                session.stopSale();
+            }
+        }
+    }
+
+    private List<RawSession> listSessions(String supplierProjectId, boolean seatSelection) {
         List<RawSession> sessions = new ArrayList<>();
         for (ShanghaiGrandTheatreModels.Schedule schedule : client.listSchedules(numberId(supplierProjectId, "项目ID"))) {
             sessions.add(toSession(schedule, seatSelection));
@@ -56,8 +76,7 @@ public class ShanghaiGrandTheatreCatalogAdapter implements ISupplierCatalogPort 
         return sessions;
     }
 
-    @Override
-    public List<RawTicketItem> listTicketItems(String supplierSessionId, int maxSaleQty) {
+    private List<RawTicketItem> listTicketItems(String supplierSessionId, int maxSaleQty) {
         int max = Math.max(maxSaleQty, 1);
         List<RawTicketItem> items = new ArrayList<>();
         for (ShanghaiGrandTheatreModels.Price price : client.listPrices(numberId(supplierSessionId, "场次ID"))) {

@@ -3,11 +3,8 @@ package com.owen.domain.supplier.service;
 import com.owen.domain.supplier.adapter.port.IPoiPort;
 import com.owen.domain.supplier.adapter.port.ISupplierCatalogPort;
 import com.owen.domain.supplier.model.aggregate.ApiProjectAggregate;
-import com.owen.domain.supplier.model.entity.ApiSession;
 import com.owen.domain.supplier.model.entity.Poi;
 import com.owen.domain.supplier.model.valobj.RawProject;
-import com.owen.domain.supplier.model.valobj.RawSession;
-import com.owen.domain.supplier.model.valobj.RawTicketItem;
 import com.owen.domain.supplier.model.valobj.VenueSnapshot;
 import com.owen.domain.supplier.repository.IApiProjectRepository;
 import com.owen.domain.supplier.repository.IPoiRepository;
@@ -54,26 +51,21 @@ public class SupplierStaticPullService {
     }
 
     /**
-     * 按已落库项目逐个拉场次和票品。本次没返回的下级停售，不物理删除。
+     * 已落库的供应商项目 ID。不加载场次和票品，单个项目的加载放在对应的拉取任务里。
      */
-    public void pullChildren(SupplierEnum supplier) {
-        ISupplierCatalogPort port = portOf(supplier);
-        for (ApiProjectAggregate project : projectRepository.findWithChildren(supplier.getId())) {
-            List<RawSession> sessions = port.listSessions(project.getSupplierProjectId(), project.isSeatSelection());
-            project.syncSessions(sessions);
-            for (RawSession rawSession : sessions) {
-                ApiSession session = project.getSessions().stream()
-                        .filter(item -> item.getSupplierSessionId().equals(rawSession.supplierSessionId()))
-                        .findFirst()
-                        .orElseThrow();
-                List<RawTicketItem> ticketItems = port.listTicketItems(rawSession.supplierSessionId(), rawSession.maxSaleQty());
-                session.syncTicketItems(ticketItems);
-                if (session.getStatus() == com.owen.types.enums.SaleStatusEnum.OFF_SALE) {
-                    session.stopSale();
-                }
-            }
-            projectRepository.syncChildren(project);
-        }
+    public List<String> listSupplierProjectIds(SupplierEnum supplier) {
+        return projectRepository.findSupplierProjectIds(supplier.getId());
+    }
+
+    /**
+     * 拉取一个项目的下级并落库。加载、对齐、保存都只针对这一个项目。
+     * 拉场次、票品还是取票方式，由该供应商的端口决定。
+     */
+    public void pullProjectChildren(SupplierEnum supplier, String supplierProjectId) {
+        ApiProjectAggregate project = projectRepository.findWithChildren(supplier.getId(), supplierProjectId)
+                .orElseThrow(() -> new AppException("SUPPLIER_PROJECT_MISSING", "项目不存在: " + supplierProjectId));
+        portOf(supplier).pullChildren(project);
+        projectRepository.syncChildren(project);
     }
 
     private void refreshProject(ApiProjectAggregate existing, RawProject raw) {

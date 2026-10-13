@@ -57,11 +57,18 @@ public class ApiProjectRepository implements IApiProjectRepository {
     }
 
     @Override
-    public List<ApiProjectAggregate> findWithChildren(Long supplierId) {
+    public List<String> findSupplierProjectIds(Long supplierId) {
         return projectDao.selectBySupplierId(supplierId).stream()
-                .map(projectConverter::toAggregate)
-                .peek(this::loadChildren)
+                .map(ApiProject::getSupplierProjectId)
                 .toList();
+    }
+
+    @Override
+    public Optional<ApiProjectAggregate> findWithChildren(Long supplierId, String supplierProjectId) {
+        return find(supplierId, supplierProjectId).map(project -> {
+            loadChildren(project);
+            return project;
+        });
     }
 
     @Override

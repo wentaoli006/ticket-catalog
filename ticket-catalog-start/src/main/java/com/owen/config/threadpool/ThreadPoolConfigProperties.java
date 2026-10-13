@@ -1,4 +1,4 @@
-package com.owen.config;
+package com.owen.config.threadpool;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

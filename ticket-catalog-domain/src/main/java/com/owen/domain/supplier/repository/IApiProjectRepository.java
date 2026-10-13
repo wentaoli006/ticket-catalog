@@ -12,8 +12,11 @@ public interface IApiProjectRepository {
 
     Optional<ApiProjectAggregate> find(Long supplierId, String supplierProjectId);
 
+    /** 只返回供应商项目 ID，下级由调用方按项目再加载。 */
+    List<String> findSupplierProjectIds(Long supplierId);
+
     /** 下级拉取用。带出已落库场次和票品，才能把本次没返回的标成停售。 */
-    List<ApiProjectAggregate> findWithChildren(Long supplierId);
+    Optional<ApiProjectAggregate> findWithChildren(Long supplierId, String supplierProjectId);
 
     List<ApiProjectAggregate> findBySupplier(Long supplierId);
 
