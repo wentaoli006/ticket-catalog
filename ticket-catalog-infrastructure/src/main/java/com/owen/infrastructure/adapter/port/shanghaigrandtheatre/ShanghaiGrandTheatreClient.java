@@ -1,21 +1,22 @@
 package com.owen.infrastructure.adapter.port.shanghaigrandtheatre;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.owen.domain.adapter.IDynamicConfig;
+import com.owen.infrastructure.http.HttpClient;
+import com.owen.infrastructure.http.HttpRequestException;
 import com.owen.types.exception.AppException;
-import lombok.extern.slf4j.Slf4j;
+import com.owen.types.log.Logs;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestClientException;
 
-import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 上海大剧院 HTTP 客户端。只取报文，不解释售卖规则。
  * 接口地址从 Apollo 的 application namespace 读取，每次请求重新取。
  */
-@Slf4j
 @Component
 public class ShanghaiGrandTheatreClient {
 
@@ -24,56 +25,64 @@ public class ShanghaiGrandTheatreClient {
     private static final String PROGRAMS = "/theatre/partner/ticket/getAvailablePrograms.xhtml";
     private static final String SCHEDULES = "/theatre/partner/ticket/getAvailableSchedules.xhtml";
     private static final String PRICES = "/theatre/partner/ticket/getSchedulePrices.xhtml";
+    private static final ObjectMapper JSON = new ObjectMapper();
 
-    private final RestClient restClient;
+    private final HttpClient httpClient;
     private final IDynamicConfig dynamicConfig;
 
-    public ShanghaiGrandTheatreClient(RestClient.Builder builder, IDynamicConfig dynamicConfig) {
-        this.restClient = builder.build();
+    public ShanghaiGrandTheatreClient(HttpClient httpClient, IDynamicConfig dynamicConfig) {
+        this.httpClient = httpClient;
         this.dynamicConfig = dynamicConfig;
     }
 
     public List<ShanghaiGrandTheatreModels.Program> listPrograms() {
-        return get(PROGRAMS, new ParameterizedTypeReference<>() {
-        });
+        String body;
+        try {
+            body = httpClient.get(endpoint(PROGRAMS), String.class);
+        } catch (HttpRequestException exception) {
+            Logs.warn("上海大剧院-可售项目", PROGRAMS, exception);
+            throw new AppException("SUPPLIER_HTTP_FAILED", "上海大剧院-可售项目失败", exception);
+        }
+        Logs.info("上海大剧院-可售项目", body);
+        return unwrap("上海大剧院-可售项目", read(body, new ParameterizedTypeReference<>() {
+        }));
     }
 
     public List<ShanghaiGrandTheatreModels.Schedule> listSchedules(Long programId) {
-        return get(SCHEDULES, "programId", programId, new ParameterizedTypeReference<>() {
-        });
+        String body;
+        try {
+            body = httpClient.get(endpoint(SCHEDULES), Map.of("programId", programId), String.class);
+        } catch (HttpRequestException exception) {
+            Logs.warn("上海大剧院-可售场次", SCHEDULES + " programId=" + programId, Map.of("programId", programId), exception);
+            throw new AppException("SUPPLIER_HTTP_FAILED", "上海大剧院-可售场次失败", exception);
+        }
+        Logs.info("上海大剧院-可售场次", body, Map.of("programId", programId));
+        return unwrap("上海大剧院-可售场次", read(body, new ParameterizedTypeReference<>() {
+        }));
     }
 
     public List<ShanghaiGrandTheatreModels.Price> listPrices(Long scheduleId) {
-        return get(PRICES, "scheduleId", scheduleId, new ParameterizedTypeReference<>() {
-        });
-    }
-
-    private <T> List<T> get(String path, ParameterizedTypeReference<ShanghaiGrandTheatreModels.Response<T>> type) {
+        String body;
         try {
-            return unwrap(path, restClient.get().uri(URI.create(endpoint(path))).retrieve().body(type));
-        } catch (AppException exception) {
-            throw exception;
-        } catch (IllegalArgumentException exception) {
-            throw new AppException("SUPPLIER_HTTP_FAILED", "上海大剧院接口地址不合法", exception);
-        } catch (RestClientException exception) {
-            throw new AppException("SUPPLIER_HTTP_FAILED", "上海大剧院接口失败: " + path, exception);
+            body = httpClient.get(endpoint(PRICES), Map.of("scheduleId", scheduleId), String.class);
+        } catch (HttpRequestException exception) {
+            Logs.warn("上海大剧院-场次票价", PRICES + " scheduleId=" + scheduleId, Map.of("scheduleId", scheduleId), exception);
+            throw new AppException("SUPPLIER_HTTP_FAILED", "上海大剧院-场次票价失败", exception);
         }
+        Logs.info("上海大剧院-场次票价", body, Map.of("scheduleId", scheduleId));
+        return unwrap("上海大剧院-场次票价", read(body, new ParameterizedTypeReference<>() {
+        }));
     }
 
-    private <T> List<T> get(String path, String name, Long value,
-                            ParameterizedTypeReference<ShanghaiGrandTheatreModels.Response<T>> type) {
+    private <T> ShanghaiGrandTheatreModels.Response<T> read(String body,
+                                                             ParameterizedTypeReference<ShanghaiGrandTheatreModels.Response<T>> type) {
+        if (body == null || body.isBlank()) {
+            return null;
+        }
         try {
-            ShanghaiGrandTheatreModels.Response<T> response = restClient.get()
-                    .uri(URI.create(endpoint(path) + "?" + name + "=" + value))
-                    .retrieve()
-                    .body(type);
-            return unwrap(path, response);
-        } catch (AppException exception) {
-            throw exception;
-        } catch (IllegalArgumentException exception) {
-            throw new AppException("SUPPLIER_HTTP_FAILED", "上海大剧院接口地址不合法", exception);
-        } catch (RestClientException exception) {
-            throw new AppException("SUPPLIER_HTTP_FAILED", "上海大剧院接口失败: " + path, exception);
+            return JSON.readValue(body, JSON.constructType(type.getType()));
+        } catch (JsonProcessingException exception) {
+            throw new AppException("SUPPLIER_HTTP_FAILED", "上海大剧院报文无法解析", exception);
         }
     }
 
@@ -88,13 +97,11 @@ public class ShanghaiGrandTheatreClient {
         return baseUrl + path;
     }
 
-    private <T> List<T> unwrap(String path, ShanghaiGrandTheatreModels.Response<T> response) {
+    private <T> List<T> unwrap(String api, ShanghaiGrandTheatreModels.Response<T> response) {
         if (response == null || !Boolean.TRUE.equals(response.getSuccess())) {
-            throw new AppException("SUPPLIER_HTTP_FAILED", "上海大剧院接口失败: " + path);
+            throw new AppException("SUPPLIER_HTTP_FAILED", api + "失败");
         }
-        List<T> data = response.getData() == null ? List.of() : response.getData();
-        log.info("上海大剧院接口返回 path={} size={}", path, data.size());
-        return data;
+        return response.getData() == null ? List.of() : response.getData();
     }
 
 }

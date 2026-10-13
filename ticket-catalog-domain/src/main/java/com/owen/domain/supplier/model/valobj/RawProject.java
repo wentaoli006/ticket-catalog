@@ -30,9 +30,6 @@ public record RawProject(
         if (saleStatus == null) {
             throw new IllegalArgumentException("售卖状态不能为空");
         }
-        if (timezone == null) {
-            throw new IllegalArgumentException("时区不能为空");
-        }
     }
 
 }

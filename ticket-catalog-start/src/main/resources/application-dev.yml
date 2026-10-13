@@ -31,6 +31,14 @@ mybatis:
   mapper-locations: classpath*:mybatis/mapper/**/*.xml
   config-location:  classpath:/mybatis/config/mybatis-config.xml
 
+# 出站 HTTP。供应商地址在 Apollo，不写在这里。
+http:
+  client:
+    connect-timeout: 3000
+    read-timeout: 5000
+    max-connections: 50
+    connection-request-timeout: 1000
+
 # Redis
 redis:
   sdk:

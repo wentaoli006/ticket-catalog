@@ -1,8 +1,8 @@
 package com.owen.trigger.http;
 
 import com.owen.types.common.Constants;
+import com.owen.types.log.Logs;
 import com.owen.types.model.Response;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -10,7 +10,6 @@ import jakarta.annotation.Resource;
 import java.util.Random;
 import java.util.concurrent.ThreadPoolExecutor;
 
-@Slf4j
 @RestController
 public class Controller {
 
@@ -22,13 +21,13 @@ public class Controller {
      */
     @RequestMapping("/success")
     public Response<String> success() {
-        log.info("测试调用");
+        Logs.info("测试调用", "请求 /success");
         try {
             // 随机休眠
             Thread.sleep(new Random().nextInt(1000));
             // 开启线程
             threadPoolExecutor.execute(() -> {
-                log.info("开启线程");
+                Logs.info("开启线程", "请求 /success 后开启线程");
             });
         } catch (InterruptedException e) {
             throw new RuntimeException(e);

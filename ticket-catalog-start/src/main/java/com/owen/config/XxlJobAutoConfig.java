@@ -1,12 +1,11 @@
 package com.owen.config;
 
+import com.owen.types.log.Logs;
 import com.xxl.job.core.executor.impl.XxlJobSpringExecutor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-@Slf4j
 @Configuration
 public class XxlJobAutoConfig {
 
@@ -36,7 +35,8 @@ public class XxlJobAutoConfig {
 
     @Bean
     public XxlJobSpringExecutor xxlJobExecutor() {
-        log.info(">>>>>>>>>>> xxl-job config init.");
+        Logs.info("xxl-job配置初始化",
+                "appname=" + appname + " admin=" + adminAddresses + " address=" + address + " ip=" + ip + " port=" + port);
 
         XxlJobSpringExecutor xxlJobSpringExecutor = new XxlJobSpringExecutor();
         xxlJobSpringExecutor.setAdminAddresses(adminAddresses);

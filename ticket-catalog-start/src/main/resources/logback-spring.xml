@@ -61,6 +61,7 @@
                 <message>
                     <fieldName>message</fieldName>
                 </message>
+                <keyValuePairs/>
                 <stackTrace>
                     <fieldName>stack_trace</fieldName>
                 </stackTrace>
@@ -107,6 +108,7 @@
                 <message>
                     <fieldName>message</fieldName>
                 </message>
+                <keyValuePairs/>
                 <stackTrace>
                     <fieldName>stack_trace</fieldName>
                 </stackTrace>
