@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 /**
  * 供应商原始场次。时间都是项目时区下的钟面时间。
  */
-public record RawSession(
+public record RawSessionVO(
         String supplierSessionId,
         String name,
         LocalDateTime sessionStartTime,
@@ -20,7 +20,7 @@ public record RawSession(
         int maxSaleQty
 ) {
 
-    public RawSession {
+    public RawSessionVO {
         if (supplierSessionId == null || supplierSessionId.isBlank()) {
             throw new IllegalArgumentException("供应商场次ID不能为空");
         }

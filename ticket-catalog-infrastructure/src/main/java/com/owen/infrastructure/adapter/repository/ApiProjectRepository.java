@@ -1,8 +1,8 @@
 package com.owen.infrastructure.adapter.repository;
 
 import com.owen.domain.supplier.model.aggregate.ApiProjectAggregate;
-import com.owen.domain.supplier.model.entity.ApiSession;
-import com.owen.domain.supplier.model.entity.ApiTicketItem;
+import com.owen.domain.supplier.model.entity.ApiSessionEntity;
+import com.owen.domain.supplier.model.entity.ApiTicketItemEntity;
 import com.owen.domain.supplier.repository.IApiProjectRepository;
 import com.owen.infrastructure.adapter.repository.converter.ApiProjectConverter;
 import com.owen.infrastructure.adapter.repository.converter.ApiSessionConverter;
@@ -11,6 +11,7 @@ import com.owen.infrastructure.dao.IApiProjectDao;
 import com.owen.infrastructure.dao.IApiSessionDao;
 import com.owen.infrastructure.dao.IApiTicketItemDao;
 import com.owen.infrastructure.dao.po.ApiProject;
+import com.owen.types.enums.SaleStatusEnum;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -57,10 +58,8 @@ public class ApiProjectRepository implements IApiProjectRepository {
     }
 
     @Override
-    public List<String> findSupplierProjectIds(Long supplierId) {
-        return projectDao.selectBySupplierId(supplierId).stream()
-                .map(ApiProject::getSupplierProjectId)
-                .toList();
+    public List<String> findSupplierProjectIds(Long supplierId, SaleStatusEnum saleStatus) {
+        return projectDao.selectSupplierProjectIds(supplierId, saleStatus.getCode());
     }
 
     @Override
@@ -85,7 +84,7 @@ public class ApiProjectRepository implements IApiProjectRepository {
     @Override
     public void syncChildren(ApiProjectAggregate project) {
         save(project);
-        for (ApiSession session : project.getSessions()) {
+        for (ApiSessionEntity session : project.getSessions()) {
             com.owen.infrastructure.dao.po.ApiSession sessionPo = sessionConverter.toPo(session);
             if (sessionPo.getId() == null) {
                 sessionDao.insert(sessionPo);
@@ -93,7 +92,7 @@ public class ApiProjectRepository implements IApiProjectRepository {
             } else {
                 sessionDao.update(sessionPo);
             }
-            for (ApiTicketItem item : session.getTicketItems()) {
+            for (ApiTicketItemEntity item : session.getTicketItems()) {
                 com.owen.infrastructure.dao.po.ApiTicketItem itemPo = ticketItemConverter.toPo(item);
                 if (itemPo.getId() == null) {
                     ticketItemDao.insert(itemPo);
@@ -106,7 +105,7 @@ public class ApiProjectRepository implements IApiProjectRepository {
 
     private void loadChildren(ApiProjectAggregate project) {
         for (com.owen.infrastructure.dao.po.ApiSession sessionPo : sessionDao.selectByProjectId(project.getId())) {
-            ApiSession session = sessionConverter.toEntity(sessionPo);
+            ApiSessionEntity session = sessionConverter.toEntity(sessionPo);
             for (com.owen.infrastructure.dao.po.ApiTicketItem itemPo : ticketItemDao.selectBySessionId(session.getId())) {
                 session.attach(ticketItemConverter.toEntity(itemPo));
             }

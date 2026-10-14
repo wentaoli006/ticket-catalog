@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * API 原始项目管理后台。手动拉取只提交任务，接口返回不表示拉取完成。
+ * API 原始项目管理后台。手动拉取在当前请求里执行完再返回。
  */
 @Validated
 @RestController

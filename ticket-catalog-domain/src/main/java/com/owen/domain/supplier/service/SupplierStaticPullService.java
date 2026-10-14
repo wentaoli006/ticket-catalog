@@ -3,11 +3,12 @@ package com.owen.domain.supplier.service;
 import com.owen.domain.supplier.adapter.port.IPoiPort;
 import com.owen.domain.supplier.adapter.port.ISupplierCatalogPort;
 import com.owen.domain.supplier.model.aggregate.ApiProjectAggregate;
-import com.owen.domain.supplier.model.entity.Poi;
-import com.owen.domain.supplier.model.valobj.RawProject;
-import com.owen.domain.supplier.model.valobj.VenueSnapshot;
+import com.owen.domain.supplier.model.entity.PoiEntity;
+import com.owen.domain.supplier.model.valobj.RawProjectVO;
+import com.owen.domain.supplier.model.valobj.VenueSnapshotVO;
 import com.owen.domain.supplier.repository.IApiProjectRepository;
 import com.owen.domain.supplier.repository.IPoiRepository;
+import com.owen.types.enums.SaleStatusEnum;
 import com.owen.types.enums.StockModeEnum;
 import com.owen.types.enums.SupplierEnum;
 import com.owen.types.exception.AppException;
@@ -42,7 +43,7 @@ public class SupplierStaticPullService {
      */
     public void pullProjects(SupplierEnum supplier) {
         ISupplierCatalogPort port = portOf(supplier);
-        for (RawProject raw : port.listProjects()) {
+        for (RawProjectVO raw : port.listProjects()) {
             projectRepository.find(supplier.getId(), raw.supplierProjectId())
                     .ifPresentOrElse(
                             existing -> refreshProject(existing, raw),
@@ -51,10 +52,10 @@ public class SupplierStaticPullService {
     }
 
     /**
-     * 已落库的供应商项目 ID。不加载场次和票品，单个项目的加载放在对应的拉取任务里。
+     * 在售项目的供应商项目 ID。停售项目不再拉下级。不加载场次和票品。
      */
     public List<String> listSupplierProjectIds(SupplierEnum supplier) {
-        return projectRepository.findSupplierProjectIds(supplier.getId());
+        return projectRepository.findSupplierProjectIds(supplier.getId(), SaleStatusEnum.ON_SALE);
     }
 
     /**
@@ -68,20 +69,20 @@ public class SupplierStaticPullService {
         projectRepository.syncChildren(project);
     }
 
-    private void refreshProject(ApiProjectAggregate existing, RawProject raw) {
+    private void refreshProject(ApiProjectAggregate existing, RawProjectVO raw) {
         existing.refresh(raw);
         projectRepository.save(existing);
     }
 
-    private void createProject(SupplierEnum supplier, RawProject raw) {
+    private void createProject(SupplierEnum supplier, RawProjectVO raw) {
         ApiProjectAggregate project = ApiProjectAggregate.pull(supplier.getId(), raw, StockModeEnum.SHARED);
-        VenueSnapshot venue = VenueSnapshot.of(raw.venueName(), raw.venueAddress());
+        VenueSnapshotVO venue = VenueSnapshotVO.of(raw.venueName(), raw.venueAddress());
         if (venue != null) {
             Long poiId = poiRepository.findByVenue(supplier.getId(), venue.name())
-                    .map(Poi::getPoiId)
+                    .map(PoiEntity::getPoiId)
                     .orElseGet(() -> {
                         Long applied = poiPort.apply(supplier.getName(), raw.supplierProjectId());
-                        poiRepository.save(Poi.applied(supplier.getId(), venue, applied));
+                        poiRepository.save(PoiEntity.applied(supplier.getId(), venue, applied));
                         return applied;
                     });
             project.bindPoi(poiId);

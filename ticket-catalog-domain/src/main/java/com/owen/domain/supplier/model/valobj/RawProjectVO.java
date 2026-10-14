@@ -7,7 +7,7 @@ import java.time.ZoneId;
 /**
  * 供应商原始项目。只承载标准化后的业务字段，不含供应商协议字段。
  */
-public record RawProject(
+public record RawProjectVO(
         String supplierProjectId,
         String name,
         String posterUrl,
@@ -20,7 +20,7 @@ public record RawProject(
         String venueAddress
 ) {
 
-    public RawProject {
+    public RawProjectVO {
         if (supplierProjectId == null || supplierProjectId.isBlank()) {
             throw new IllegalArgumentException("供应商项目ID不能为空");
         }

@@ -6,7 +6,7 @@ import com.owen.types.enums.SaleStatusEnum;
 /**
  * 供应商原始票品。stockShowNum 只是展示库存，本系统不扣减。
  */
-public record RawTicketItem(
+public record RawTicketItemVO(
         String supplierTicketItemId,
         String name,
         String description,
@@ -19,7 +19,7 @@ public record RawTicketItem(
         int personCount
 ) {
 
-    public RawTicketItem {
+    public RawTicketItemVO {
         if (supplierTicketItemId == null || supplierTicketItemId.isBlank()) {
             throw new IllegalArgumentException("供应商票品ID不能为空");
         }

@@ -18,4 +18,6 @@ public interface IApiProjectDao {
 
     List<ApiProject> selectBySupplierId(Long supplierId);
 
+    List<String> selectSupplierProjectIds(Long supplierId, Integer saleStatus);
+
 }

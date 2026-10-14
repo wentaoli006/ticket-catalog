@@ -75,4 +75,11 @@
         WHERE supplier_id = #{supplierId}
     </select>
 
+    <select id="selectSupplierProjectIds" resultType="java.lang.String">
+        SELECT supplier_project_id
+        FROM api_project
+        WHERE supplier_id = #{supplierId}
+          AND sale_status = #{saleStatus}
+    </select>
+
 </mapper>

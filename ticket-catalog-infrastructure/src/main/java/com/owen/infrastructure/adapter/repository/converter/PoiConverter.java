@@ -1,6 +1,6 @@
 package com.owen.infrastructure.adapter.repository.converter;
 
-import com.owen.domain.supplier.model.entity.Poi;
+import com.owen.domain.supplier.model.entity.PoiEntity;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -9,13 +9,13 @@ public interface PoiConverter {
 
     @Mapping(target = "createTime", ignore = true)
     @Mapping(target = "updateTime", ignore = true)
-    com.owen.infrastructure.dao.po.Poi toPo(Poi poi);
+    com.owen.infrastructure.dao.po.Poi toPo(PoiEntity poi);
 
-    default Poi toEntity(com.owen.infrastructure.dao.po.Poi po) {
+    default PoiEntity toEntity(com.owen.infrastructure.dao.po.Poi po) {
         if (po == null) {
             return null;
         }
-        return Poi.restore(
+        return PoiEntity.restore(
                 po.getId(),
                 po.getSupplierId(),
                 po.getSupplierPoiName(),

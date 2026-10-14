@@ -1,6 +1,6 @@
 package com.owen.infrastructure.adapter.repository.converter;
 
-import com.owen.domain.supplier.model.entity.ApiSession;
+import com.owen.domain.supplier.model.entity.ApiSessionEntity;
 import com.owen.types.enums.SaleStatusEnum;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -13,13 +13,13 @@ public interface ApiSessionConverter {
     @Mapping(target = "status", expression = "java(session.getStatus().getCode())")
     @Mapping(target = "createTime", ignore = true)
     @Mapping(target = "updateTime", ignore = true)
-    com.owen.infrastructure.dao.po.ApiSession toPo(ApiSession session);
+    com.owen.infrastructure.dao.po.ApiSession toPo(ApiSessionEntity session);
 
-    default ApiSession toEntity(com.owen.infrastructure.dao.po.ApiSession po) {
+    default ApiSessionEntity toEntity(com.owen.infrastructure.dao.po.ApiSession po) {
         if (po == null) {
             return null;
         }
-        return ApiSession.restore(
+        return ApiSessionEntity.restore(
                 po.getId(),
                 po.getSupplierId(),
                 po.getProjectId(),

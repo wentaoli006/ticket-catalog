@@ -25,11 +25,11 @@
 
 ## 通用语言（Ubiquitous Language）
 
-代码里的类名/方法名/字段名必须和 `README2.md` 里的业务词汇保持一个词对一个词的映射，禁止程序员自造同义词：
+代码里的类名/方法名/字段名必须和 `README2.md` 里的业务词汇保持一个词对一个词的映射，禁止程序员自造同义词。领域实体类名加 `Entity`，值对象类名加 `VO`，表映射放 `dao/po` 且不加后缀：
 
 | 业务词汇 | 代码命名 | 反例 |
 |---|---|---|
-| 班期 | `Schedule` | `DateSlot`、`SessionDate` |
+| 班期 | `ScheduleEntity` | `DateSlot`、`SessionDate` |
 | 展示库存 | `stockShowNum` / `ShowStock` | `inventory`（容易和"真实库存"混淆，本系统没有真实库存概念） |
 | 聚合 | `aggregate`（动词）/ `Agg`（前缀，如 `ApiProduct`） | 不要叫 `merge`/`sync`，业务上"聚合"特指原始数据→标准商品的计算过程 |
 | 上架/下架 | `publish` / `unpublish` | 不要混用 `online`/`offline`（`Offline` 在本项目已经是"线下供应商接入方式"的专有名词，撞车） |

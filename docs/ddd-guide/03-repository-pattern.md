@@ -1,26 +1,26 @@
 # 03 · Repository 模式
 
-> 模块归属：Repository **接口** 在 `ticket-catalog-domain`；Repository **实现** + DO + Converter 在 `ticket-catalog-infrastructure/persistent`。
+> 模块归属：Repository **接口** 在 `ticket-catalog-domain`；Repository **实现** + PO + Converter 在 `ticket-catalog-infrastructure`。
 
 ## 三种对象不能混用
 
-| | DO（Data Object） | Entity（实体） | DTO（传输对象） |
+| | PO（表映射） | Entity（实体） | DTO（传输对象） |
 |---|---|---|---|
 | 目的 | 数据库表映射 | 业务逻辑载体 | 适配调用方场景 |
 | 所在层 | Infrastructure | Domain | Application/Api |
-| 命名 | `XxxDO` | `Xxx` | `XxxDTO` / `XxxCommand` / `XxxQuery` |
+| 命名 | 表对象 `Xxx`，放 `dao/po`，不加 `PO`。DAO 接口是 `IXxxDao`，后缀照加 | `XxxEntity` | `XxxDTO` / `XxxCommand` / `XxxQuery` |
 | 字段 | 和数据库字段一一对应 | 和业务语言一致，尽量用 DP 而不是裸类型 | 和调用方商定，可以合并/裁剪多个 Entity 的字段 |
 | 是否需要序列化 | 不需要 | 不需要 | 需要 |
-| 转换器 | `Data Converter`（Entity↔DO，在 infrastructure） | — | `DTO Assembler`（Entity→DTO，在 app） |
+| 转换器 | `Converter`（`XxxEntity`↔`dao/po` 的 `Xxx`，在 infrastructure） | — | `DTO Assembler`（Entity→DTO，在 app） |
 
-**红线：Domain 层代码里不允许出现任何 `XxxDO` 类型；Application 层方法不允许返回 Entity，只能返回 DTO。**
+**红线：Domain 层代码里不允许出现任何 `dao.po` 类型；Application 层方法不允许返回 Entity，只能返回 DTO。值对象命名为 `XxxVO`，放 `model/valobj`，不加在表映射上。**
 
 转换器统一用 MapStruct 生成（`@Mapper` 接口 + `@Mapping` 标注差异字段），禁止手写大量 `set` 赋值代码，也不要用反射类的动态映射（性能差）。
 
 ## Repository 接口规范
 
 1. **接口名不能带数据库语义**：用 `find` / `save` / `remove`，禁止 `insert`/`select`/`update`/`delete`。是插入还是更新，由实现类根据 ID 是否存在自己判断，调用方不关心。
-2. **出入参必须是 Entity（或 Aggregate Root），不能是 DO**。Repository 接口本身要放在 `domain` 模块里，看不到任何 `infrastructure` 的类型。
+2. **出入参必须是 Entity（或 Aggregate Root），不能是 `dao/po` 的表对象**。Repository 接口本身要放在 `domain` 模块里，看不到任何 `infrastructure` 的类型。
 3. **不要用框架自动生成的"万能 Repository"**（如 Spring Data 的通用 CRUD 接口）。简单场景够用，但一旦要加定制缓存/兜底逻辑就没有扩展空间，最终还是要重做。
 
 ```java

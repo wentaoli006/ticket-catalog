@@ -1,13 +1,13 @@
 package com.owen.domain.supplier.model.entity;
 
-import com.owen.domain.supplier.model.valobj.VenueSnapshot;
+import com.owen.domain.supplier.model.valobj.VenueSnapshotVO;
 
 import java.math.BigDecimal;
 
 /**
  * 平台 POI。poiId 由外部 RPC 分配，不是本表主键。
  */
-public class Poi {
+public class PoiEntity {
 
     private Long id;
     private final Long supplierId;
@@ -18,8 +18,8 @@ public class Poi {
     private final BigDecimal longitude;
     private final BigDecimal latitude;
 
-    private Poi(Long id, Long supplierId, String supplierPoiName, String supplierPoiAddress,
-                 Long poiId, String poiName, BigDecimal longitude, BigDecimal latitude) {
+    private PoiEntity(Long id, Long supplierId, String supplierPoiName, String supplierPoiAddress,
+                      Long poiId, String poiName, BigDecimal longitude, BigDecimal latitude) {
         this.id = id;
         this.supplierId = supplierId;
         this.supplierPoiName = supplierPoiName;
@@ -33,17 +33,17 @@ public class Poi {
     /**
      * 新项目申请到平台 poiId 后创建。经纬度供应商静态接口不给，先记 0，后续人工校准。
      */
-    public static Poi applied(Long supplierId, VenueSnapshot venue, Long poiId) {
+    public static PoiEntity applied(Long supplierId, VenueSnapshotVO venue, Long poiId) {
         if (poiId == null || poiId <= 0) {
             throw new IllegalArgumentException("POI ID 不合法");
         }
-        return new Poi(null, supplierId, venue.name(), venue.address(), poiId, venue.name(),
+        return new PoiEntity(null, supplierId, venue.name(), venue.address(), poiId, venue.name(),
                 BigDecimal.ZERO, BigDecimal.ZERO);
     }
 
-    public static Poi restore(Long id, Long supplierId, String supplierPoiName, String supplierPoiAddress,
-                               Long poiId, String poiName, BigDecimal longitude, BigDecimal latitude) {
-        return new Poi(id, supplierId, supplierPoiName, supplierPoiAddress, poiId, poiName, longitude, latitude);
+    public static PoiEntity restore(Long id, Long supplierId, String supplierPoiName, String supplierPoiAddress,
+                                    Long poiId, String poiName, BigDecimal longitude, BigDecimal latitude) {
+        return new PoiEntity(id, supplierId, supplierPoiName, supplierPoiAddress, poiId, poiName, longitude, latitude);
     }
 
     public Long getId() {

@@ -1,8 +1,8 @@
 package com.owen.domain.supplier.model.aggregate;
 
-import com.owen.domain.supplier.model.entity.ApiSession;
-import com.owen.domain.supplier.model.valobj.RawProject;
-import com.owen.domain.supplier.model.valobj.RawSession;
+import com.owen.domain.supplier.model.entity.ApiSessionEntity;
+import com.owen.domain.supplier.model.valobj.RawProjectVO;
+import com.owen.domain.supplier.model.valobj.RawSessionVO;
 import com.owen.types.enums.SaleStatusEnum;
 import com.owen.types.enums.StockModeEnum;
 
@@ -32,7 +32,7 @@ public class ApiProjectAggregate {
     private LocalDateTime earliestSessionStartTime;
     private LocalDateTime latestSessionStartTime;
     private final StockModeEnum stockMode;
-    private final Map<String, ApiSession> sessions = new LinkedHashMap<>();
+    private final Map<String, ApiSessionEntity> sessions = new LinkedHashMap<>();
 
     private ApiProjectAggregate(Long id, Long supplierId, String supplierProjectId, Long poiId,
                                  String name, String posterUrl, String ticketNotice,
@@ -55,7 +55,7 @@ public class ApiProjectAggregate {
         this.stockMode = stockMode;
     }
 
-    public static ApiProjectAggregate pull(Long supplierId, RawProject raw, StockModeEnum stockMode) {
+    public static ApiProjectAggregate pull(Long supplierId, RawProjectVO raw, StockModeEnum stockMode) {
         return new ApiProjectAggregate(null, supplierId, raw.supplierProjectId(), null,
                 raw.name(), raw.posterUrl(), raw.ticketNotice(), raw.saleStatus(),
                 raw.realName(), raw.seatSelection(), raw.timezone(), null, null, stockMode);
@@ -71,7 +71,7 @@ public class ApiProjectAggregate {
                 earliestSessionStartTime, latestSessionStartTime, stockMode);
     }
 
-    public void refresh(RawProject raw) {
+    public void refresh(RawProjectVO raw) {
         this.name = raw.name();
         this.posterUrl = raw.posterUrl();
         this.ticketNotice = raw.ticketNotice();
@@ -96,13 +96,13 @@ public class ApiProjectAggregate {
      * 用本次拉取的场次全量对齐。本次没返回的场次连同其票品一起停售。
      * 场次起止时间由场次本身重算，不采信供应商项目上的时间。
      */
-    public void syncSessions(List<RawSession> raws) {
+    public void syncSessions(List<RawSessionVO> raws) {
         List<String> incoming = new ArrayList<>();
-        for (RawSession raw : raws) {
+        for (RawSessionVO raw : raws) {
             incoming.add(raw.supplierSessionId());
-            ApiSession existing = sessions.get(raw.supplierSessionId());
+            ApiSessionEntity existing = sessions.get(raw.supplierSessionId());
             if (existing == null) {
-                ApiSession created = ApiSession.pull(supplierId, raw);
+                ApiSessionEntity created = ApiSessionEntity.pull(supplierId, raw);
                 created.bindProject(id);
                 sessions.put(raw.supplierSessionId(), created);
             } else {
@@ -112,11 +112,11 @@ public class ApiProjectAggregate {
         }
         sessions.values().stream()
                 .filter(session -> !incoming.contains(session.getSupplierSessionId()))
-                .forEach(ApiSession::stopSale);
+                .forEach(ApiSessionEntity::stopSale);
         recomputeSessionWindow();
     }
 
-    public void attach(ApiSession session) {
+    public void attach(ApiSessionEntity session) {
         sessions.put(session.getSupplierSessionId(), session);
     }
 
@@ -126,7 +126,7 @@ public class ApiProjectAggregate {
     }
 
     public void assignSessionId(String supplierSessionId, Long sessionId) {
-        ApiSession session = sessions.get(supplierSessionId);
+        ApiSessionEntity session = sessions.get(supplierSessionId);
         if (session == null) {
             throw new IllegalArgumentException("场次不存在: " + supplierSessionId);
         }
@@ -135,11 +135,11 @@ public class ApiProjectAggregate {
 
     private void recomputeSessionWindow() {
         this.earliestSessionStartTime = sessions.values().stream()
-                .map(ApiSession::getSessionStartTime)
+                .map(ApiSessionEntity::getSessionStartTime)
                 .min(LocalDateTime::compareTo)
                 .orElse(null);
         this.latestSessionStartTime = sessions.values().stream()
-                .map(ApiSession::getSessionStartTime)
+                .map(ApiSessionEntity::getSessionStartTime)
                 .max(LocalDateTime::compareTo)
                 .orElse(null);
     }
@@ -200,7 +200,7 @@ public class ApiProjectAggregate {
         return stockMode;
     }
 
-    public List<ApiSession> getSessions() {
+    public List<ApiSessionEntity> getSessions() {
         return List.copyOf(sessions.values());
     }
 

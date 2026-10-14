@@ -1,6 +1,6 @@
 package com.owen.infrastructure.adapter.repository.converter;
 
-import com.owen.domain.supplier.model.entity.ApiTicketItem;
+import com.owen.domain.supplier.model.entity.ApiTicketItemEntity;
 import com.owen.types.dp.Money;
 import com.owen.types.enums.SaleStatusEnum;
 import org.mapstruct.Mapper;
@@ -14,13 +14,13 @@ public interface ApiTicketItemConverter {
     @Mapping(target = "status", expression = "java(item.getStatus().getCode())")
     @Mapping(target = "createTime", ignore = true)
     @Mapping(target = "updateTime", ignore = true)
-    com.owen.infrastructure.dao.po.ApiTicketItem toPo(ApiTicketItem item);
+    com.owen.infrastructure.dao.po.ApiTicketItem toPo(ApiTicketItemEntity item);
 
-    default ApiTicketItem toEntity(com.owen.infrastructure.dao.po.ApiTicketItem po) {
+    default ApiTicketItemEntity toEntity(com.owen.infrastructure.dao.po.ApiTicketItem po) {
         if (po == null) {
             return null;
         }
-        return ApiTicketItem.restore(
+        return ApiTicketItemEntity.restore(
                 po.getId(),
                 po.getSupplierId(),
                 po.getSupplierTicketItemId(),

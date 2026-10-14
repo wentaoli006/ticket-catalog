@@ -2,10 +2,10 @@ package com.owen.infrastructure.adapter.port.shanghaigrandtheatre;
 
 import com.owen.domain.supplier.adapter.port.ISupplierCatalogPort;
 import com.owen.domain.supplier.model.aggregate.ApiProjectAggregate;
-import com.owen.domain.supplier.model.entity.ApiSession;
-import com.owen.domain.supplier.model.valobj.RawProject;
-import com.owen.domain.supplier.model.valobj.RawSession;
-import com.owen.domain.supplier.model.valobj.RawTicketItem;
+import com.owen.domain.supplier.model.entity.ApiSessionEntity;
+import com.owen.domain.supplier.model.valobj.RawProjectVO;
+import com.owen.domain.supplier.model.valobj.RawSessionVO;
+import com.owen.domain.supplier.model.valobj.RawTicketItemVO;
 import com.owen.types.dp.Money;
 import com.owen.types.enums.SaleStatusEnum;
 import com.owen.types.enums.SupplierEnum;
@@ -41,8 +41,8 @@ public class ShanghaiGrandTheatreCatalogAdapter implements ISupplierCatalogPort 
     }
 
     @Override
-    public List<RawProject> listProjects() {
-        List<RawProject> projects = new ArrayList<>();
+    public List<RawProjectVO> listProjects() {
+        List<RawProjectVO> projects = new ArrayList<>();
         for (ShanghaiGrandTheatreModels.Program program : client.listPrograms()) {
             projects.add(toProject(program));
         }
@@ -54,10 +54,10 @@ public class ShanghaiGrandTheatreCatalogAdapter implements ISupplierCatalogPort 
      */
     @Override
     public void pullChildren(ApiProjectAggregate project) {
-        List<RawSession> sessions = listSessions(project.getSupplierProjectId(), project.isSeatSelection());
+        List<RawSessionVO> sessions = listSessions(project.getSupplierProjectId(), project.isSeatSelection());
         project.syncSessions(sessions);
-        for (RawSession rawSession : sessions) {
-            ApiSession session = project.getSessions().stream()
+        for (RawSessionVO rawSession : sessions) {
+            ApiSessionEntity session = project.getSessions().stream()
                     .filter(item -> item.getSupplierSessionId().equals(rawSession.supplierSessionId()))
                     .findFirst()
                     .orElseThrow();
@@ -68,26 +68,26 @@ public class ShanghaiGrandTheatreCatalogAdapter implements ISupplierCatalogPort 
         }
     }
 
-    private List<RawSession> listSessions(String supplierProjectId, boolean seatSelection) {
-        List<RawSession> sessions = new ArrayList<>();
+    private List<RawSessionVO> listSessions(String supplierProjectId, boolean seatSelection) {
+        List<RawSessionVO> sessions = new ArrayList<>();
         for (ShanghaiGrandTheatreModels.Schedule schedule : client.listSchedules(numberId(supplierProjectId, "项目ID"))) {
             sessions.add(toSession(schedule, seatSelection));
         }
         return sessions;
     }
 
-    private List<RawTicketItem> listTicketItems(String supplierSessionId, int maxSaleQty) {
+    private List<RawTicketItemVO> listTicketItems(String supplierSessionId, int maxSaleQty) {
         int max = Math.max(maxSaleQty, 1);
-        List<RawTicketItem> items = new ArrayList<>();
+        List<RawTicketItemVO> items = new ArrayList<>();
         for (ShanghaiGrandTheatreModels.Price price : client.listPrices(numberId(supplierSessionId, "场次ID"))) {
             items.add(toTicketItem(price, max));
         }
         return items;
     }
 
-    private static RawProject toProject(ShanghaiGrandTheatreModels.Program program) {
+    private static RawProjectVO toProject(ShanghaiGrandTheatreModels.Program program) {
         // 项目报文没有实名字段，实名以场次 checkcard 为准，项目级先记否。
-        return new RawProject(
+        return new RawProjectVO(
                 idOf(program.getId(), "项目ID"),
                 required(program.getCnName(), "项目名称"),
                 null,
@@ -101,11 +101,11 @@ public class ShanghaiGrandTheatreCatalogAdapter implements ISupplierCatalogPort 
         );
     }
 
-    private static RawSession toSession(ShanghaiGrandTheatreModels.Schedule schedule, boolean seatSelection) {
+    private static RawSessionVO toSession(ShanghaiGrandTheatreModels.Schedule schedule, boolean seatSelection) {
         String startText = required(schedule.getPlayTime(), "场次开始时间");
         boolean onSale = yes(schedule.getStatus()) && yes(schedule.getDisplay());
         int maxSaleQty = schedule.getMaxBuyLimit() == null || schedule.getMaxBuyLimit() < 1 ? 1 : schedule.getMaxBuyLimit();
-        return new RawSession(
+        return new RawSessionVO(
                 idOf(schedule.getId(), "场次ID"),
                 firstText(schedule.getCnName(), startText),
                 time(startText, "场次开始时间"),
@@ -119,7 +119,7 @@ public class ShanghaiGrandTheatreCatalogAdapter implements ISupplierCatalogPort 
         );
     }
 
-    private static RawTicketItem toTicketItem(ShanghaiGrandTheatreModels.Price price, int maxSaleQty) {
+    private static RawTicketItemVO toTicketItem(ShanghaiGrandTheatreModels.Price price, int maxSaleQty) {
         ShanghaiGrandTheatreModels.PriceInfo info = price.getPriceInfo();
         if (info == null || info.getPrice() == null) {
             throw new AppException(DATA_ERROR, "票品价格不能为空");
@@ -127,7 +127,7 @@ public class ShanghaiGrandTheatreCatalogAdapter implements ISupplierCatalogPort 
         String ticketId = idOf(price.getId() != null ? price.getId() : price.getTicketPriceId(), "票品ID");
         int personCount = info.getUnitnum() == null || info.getUnitnum() < 1 ? 1 : info.getUnitnum();
         String plu = price.getTicketPriceId() == null ? ticketId : String.valueOf(price.getTicketPriceId());
-        return new RawTicketItem(
+        return new RawTicketItemVO(
                 ticketId,
                 firstText(info.getCnName(), info.getDescription(), info.getRemark(), ticketId),
                 firstText(info.getRemark(), info.getDescription()),

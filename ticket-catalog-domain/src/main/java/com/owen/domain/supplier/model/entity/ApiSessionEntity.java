@@ -1,7 +1,7 @@
 package com.owen.domain.supplier.model.entity;
 
-import com.owen.domain.supplier.model.valobj.RawSession;
-import com.owen.domain.supplier.model.valobj.RawTicketItem;
+import com.owen.domain.supplier.model.valobj.RawSessionVO;
+import com.owen.domain.supplier.model.valobj.RawTicketItemVO;
 import com.owen.types.enums.SaleStatusEnum;
 
 import java.time.LocalDateTime;
@@ -13,7 +13,7 @@ import java.util.Map;
 /**
  * 原始场次。票品是场次的子实体，只能通过本对象增删改。
  */
-public class ApiSession {
+public class ApiSessionEntity {
 
     private Long id;
     private final Long supplierId;
@@ -27,12 +27,12 @@ public class ApiSession {
     private boolean realName;
     private boolean seatSelection;
     private SaleStatusEnum status;
-    private final Map<String, ApiTicketItem> ticketItems = new LinkedHashMap<>();
+    private final Map<String, ApiTicketItemEntity> ticketItems = new LinkedHashMap<>();
 
-    private ApiSession(Long id, Long supplierId, Long projectId, String supplierSessionId, String name,
-                        LocalDateTime sessionStartTime, LocalDateTime sessionEndTime,
-                        LocalDateTime saleStartTime, LocalDateTime saleEndTime,
-                        boolean realName, boolean seatSelection, SaleStatusEnum status) {
+    private ApiSessionEntity(Long id, Long supplierId, Long projectId, String supplierSessionId, String name,
+                              LocalDateTime sessionStartTime, LocalDateTime sessionEndTime,
+                              LocalDateTime saleStartTime, LocalDateTime saleEndTime,
+                              boolean realName, boolean seatSelection, SaleStatusEnum status) {
         this.id = id;
         this.supplierId = supplierId;
         this.projectId = projectId;
@@ -47,21 +47,21 @@ public class ApiSession {
         this.status = status;
     }
 
-    public static ApiSession pull(Long supplierId, RawSession raw) {
-        return new ApiSession(null, supplierId, null, raw.supplierSessionId(), raw.name(),
+    public static ApiSessionEntity pull(Long supplierId, RawSessionVO raw) {
+        return new ApiSessionEntity(null, supplierId, null, raw.supplierSessionId(), raw.name(),
                 raw.sessionStartTime(), raw.sessionEndTime(), raw.saleStartTime(), raw.saleEndTime(),
                 raw.realName(), raw.seatSelection(), raw.status());
     }
 
-    public static ApiSession restore(Long id, Long supplierId, Long projectId, String supplierSessionId, String name,
-                                      LocalDateTime sessionStartTime, LocalDateTime sessionEndTime,
-                                      LocalDateTime saleStartTime, LocalDateTime saleEndTime,
-                                      boolean realName, boolean seatSelection, SaleStatusEnum status) {
-        return new ApiSession(id, supplierId, projectId, supplierSessionId, name,
+    public static ApiSessionEntity restore(Long id, Long supplierId, Long projectId, String supplierSessionId, String name,
+                                            LocalDateTime sessionStartTime, LocalDateTime sessionEndTime,
+                                            LocalDateTime saleStartTime, LocalDateTime saleEndTime,
+                                            boolean realName, boolean seatSelection, SaleStatusEnum status) {
+        return new ApiSessionEntity(id, supplierId, projectId, supplierSessionId, name,
                 sessionStartTime, sessionEndTime, saleStartTime, saleEndTime, realName, seatSelection, status);
     }
 
-    public void refresh(RawSession raw) {
+    public void refresh(RawSessionVO raw) {
         this.name = raw.name();
         this.sessionStartTime = raw.sessionStartTime();
         this.sessionEndTime = raw.sessionEndTime();
@@ -74,19 +74,19 @@ public class ApiSession {
 
     public void stopSale() {
         this.status = SaleStatusEnum.OFF_SALE;
-        ticketItems.values().forEach(ApiTicketItem::stopSale);
+        ticketItems.values().forEach(ApiTicketItemEntity::stopSale);
     }
 
     /**
      * 用本次拉取的票品全量对齐：已有的刷新，没有的新增，本次没返回的停售。
      */
-    public void syncTicketItems(List<RawTicketItem> raws) {
+    public void syncTicketItems(List<RawTicketItemVO> raws) {
         List<String> incoming = new ArrayList<>();
-        for (RawTicketItem raw : raws) {
+        for (RawTicketItemVO raw : raws) {
             incoming.add(raw.supplierTicketItemId());
-            ApiTicketItem existing = ticketItems.get(raw.supplierTicketItemId());
+            ApiTicketItemEntity existing = ticketItems.get(raw.supplierTicketItemId());
             if (existing == null) {
-                ApiTicketItem created = ApiTicketItem.pull(supplierId, raw);
+                ApiTicketItemEntity created = ApiTicketItemEntity.pull(supplierId, raw);
                 created.bindSession(id);
                 ticketItems.put(raw.supplierTicketItemId(), created);
             } else {
@@ -96,7 +96,7 @@ public class ApiSession {
         }
         ticketItems.values().stream()
                 .filter(item -> !incoming.contains(item.getSupplierTicketItemId()))
-                .forEach(ApiTicketItem::stopSale);
+                .forEach(ApiTicketItemEntity::stopSale);
     }
 
     /**
@@ -114,7 +114,7 @@ public class ApiSession {
         ticketItems.values().forEach(item -> item.bindSession(id));
     }
 
-    public void attach(ApiTicketItem ticketItem) {
+    public void attach(ApiTicketItemEntity ticketItem) {
         ticketItems.put(ticketItem.getSupplierTicketItemId(), ticketItem);
     }
 
@@ -166,7 +166,7 @@ public class ApiSession {
         return status;
     }
 
-    public List<ApiTicketItem> getTicketItems() {
+    public List<ApiTicketItemEntity> getTicketItems() {
         return List.copyOf(ticketItems.values());
     }
 
