@@ -4,7 +4,6 @@ import com.owen.api.supplier.PullProjectChildrenCommand;
 import com.owen.application.supplier.SupplierStaticPullAppService;
 import com.owen.types.common.Constants;
 import com.owen.types.model.Response;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import org.springframework.validation.annotation.Validated;
@@ -28,9 +27,8 @@ public class ApiProjectAdminController {
     }
 
     @PostMapping("/children")
-    public Response<Void> pullProjectChildren(@RequestParam @NotNull @Positive Long supplierId,
-                                               @RequestParam @NotBlank String supplierProjectId) {
-        appService.pullProjectChildren(new PullProjectChildrenCommand(supplierId, supplierProjectId));
+    public Response<Void> pullProjectChildren(@RequestParam @NotNull @Positive Long projectId) {
+        appService.pullProjectChildren(new PullProjectChildrenCommand(projectId));
         return Response.<Void>builder()
                 .code(Constants.ResponseCode.SUCCESS.getCode())
                 .info(Constants.ResponseCode.SUCCESS.getInfo())

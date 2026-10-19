@@ -5,6 +5,7 @@ import com.owen.domain.supplier.adapter.port.ISupplierCatalogPort;
 import com.owen.domain.supplier.model.aggregate.ApiProjectAggregate;
 import com.owen.domain.supplier.model.entity.PoiEntity;
 import com.owen.domain.supplier.model.valobj.RawProjectVO;
+import com.owen.domain.supplier.model.valobj.RawSessionVO;
 import com.owen.domain.supplier.model.valobj.VenueSnapshotVO;
 import com.owen.domain.supplier.repository.IApiProjectRepository;
 import com.owen.domain.supplier.repository.IPoiRepository;
@@ -52,21 +53,29 @@ public class SupplierStaticPullService {
     }
 
     /**
-     * 在售项目的供应商项目 ID。停售项目不再拉下级。不加载场次和票品。
+     * 本分片在售项目的主键。停售项目不再拉下级。不加载场次和票品。
      */
-    public List<String> listSupplierProjectIds(SupplierEnum supplier) {
-        return projectRepository.findSupplierProjectIds(supplier.getId(), SaleStatusEnum.ON_SALE);
+    public List<Long> listProjectIds(SupplierEnum supplier, int shardIndex, int shardTotal) {
+        return projectRepository.findIds(supplier.getId(), SaleStatusEnum.ON_SALE, shardIndex, shardTotal);
     }
 
     /**
-     * 拉取一个项目的下级并落库。加载、对齐、保存都只针对这一个项目。
-     * 拉场次、票品还是取票方式，由该供应商的端口决定。
+     * 按主键拉取一个项目的下级并落库。场次只向供应商要一次。
+     * 内存里只放本次返回的场次，加上库里仍在售、这次没返回的场次。已停售的历史不进聚合。
      */
-    public void pullProjectChildren(SupplierEnum supplier, String supplierProjectId) {
-        ApiProjectAggregate project = projectRepository.findWithChildren(supplier.getId(), supplierProjectId)
-                .orElseThrow(() -> new AppException("SUPPLIER_PROJECT_MISSING", "项目不存在: " + supplierProjectId));
-        portOf(supplier).pullChildren(project);
-        projectRepository.syncChildren(project);
+    public void pullProjectChildren(Long projectId) {
+        ApiProjectAggregate project = projectRepository.find(projectId)
+                .orElseThrow(() -> new AppException("SUPPLIER_PROJECT_MISSING", "项目不存在: " + projectId));
+        ISupplierCatalogPort port = portOf(SupplierEnum.of(project.getSupplierId()));
+        List<RawSessionVO> sessions = port.listSessions(project);
+        ApiProjectAggregate working = projectRepository.findForChildPull(projectId, sessionIds(sessions))
+                .orElseThrow(() -> new AppException("SUPPLIER_PROJECT_MISSING", "项目不存在: " + projectId));
+        port.pullChildren(working, sessions);
+        projectRepository.syncChildren(working);
+    }
+
+    private static List<String> sessionIds(List<RawSessionVO> sessions) {
+        return sessions.stream().map(RawSessionVO::supplierSessionId).toList();
     }
 
     private void refreshProject(ApiProjectAggregate existing, RawProjectVO raw) {

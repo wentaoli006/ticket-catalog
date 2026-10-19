@@ -49,12 +49,16 @@ public class ShanghaiGrandTheatreCatalogAdapter implements ISupplierCatalogPort 
         return projects;
     }
 
+    @Override
+    public List<RawSessionVO> listSessions(ApiProjectAggregate project) {
+        return listSessions(project.getSupplierProjectId(), project.isSeatSelection());
+    }
+
     /**
      * 上海大剧院的下级是场次，场次下面是票品。别的供应商不要照这个顺序。
      */
     @Override
-    public void pullChildren(ApiProjectAggregate project) {
-        List<RawSessionVO> sessions = listSessions(project.getSupplierProjectId(), project.isSeatSelection());
+    public void pullChildren(ApiProjectAggregate project, List<RawSessionVO> sessions) {
         project.syncSessions(sessions);
         for (RawSessionVO rawSession : sessions) {
             ApiSessionEntity session = project.getSessions().stream()
@@ -65,6 +69,20 @@ public class ShanghaiGrandTheatreCatalogAdapter implements ISupplierCatalogPort 
             if (session.getStatus() == SaleStatusEnum.OFF_SALE) {
                 session.stopSale();
             }
+        }
+        savePickupDemo(project);
+    }
+
+    /**
+     * demo：上海大剧院场次才有取票方式，不进项目聚合。下一个供应商没有这段。
+     * 场次主键要等公共仓储落库后才有。这里先留位置，不建表，也不真落库。
+     */
+    private void savePickupDemo(ApiProjectAggregate project) {
+        for (ApiSessionEntity session : project.getSessions()) {
+            if (session.getId() == null) {
+                continue;
+            }
+            // demo 不是真的要实现：按 supplier_id + session_id 保存该场次的取票方式
         }
     }
 

@@ -10,6 +10,8 @@ public interface IApiTicketItemDao {
 
     int insert(ApiTicketItem apiTicketItem);
 
+    int insertBatch(List<ApiTicketItem> items);
+
     int update(ApiTicketItem apiTicketItem);
 
     ApiTicketItem selectById(Long id);

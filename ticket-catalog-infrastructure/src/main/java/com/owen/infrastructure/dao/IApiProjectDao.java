@@ -18,6 +18,8 @@ public interface IApiProjectDao {
 
     List<ApiProject> selectBySupplierId(Long supplierId);
 
-    List<String> selectSupplierProjectIds(Long supplierId, Integer saleStatus);
+    List<Long> selectIds(Long supplierId, Integer saleStatus, int shardIndex, int shardTotal);
+
+    int refreshSessionWindow(Long projectId);
 
 }

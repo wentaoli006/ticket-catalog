@@ -40,6 +40,19 @@
         )
     </insert>
 
+    <insert id="insertBatch" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO api_ticket_item (
+            supplier_id, supplier_ticket_item_id, session_id, name, description,
+            min_sale_qty, max_sale_qty, price, currency, stock_show_num, plu, plu_id,
+            status, person_count, create_time, update_time
+        ) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.supplierId}, #{item.supplierTicketItemId}, #{item.sessionId}, #{item.name}, #{item.description},
+            #{item.minSaleQty}, #{item.maxSaleQty}, #{item.price}, #{item.currency}, #{item.stockShowNum}, #{item.plu}, #{item.pluId},
+            #{item.status}, #{item.personCount}, now(), now())
+        </foreach>
+    </insert>
+
     <update id="update" parameterType="com.owen.infrastructure.dao.po.ApiTicketItem">
         UPDATE api_ticket_item
         SET session_id = #{sessionId},

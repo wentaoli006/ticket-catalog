@@ -13,11 +13,19 @@ public interface IApiProjectRepository {
 
     Optional<ApiProjectAggregate> find(Long supplierId, String supplierProjectId);
 
-    /** 只返回指定售卖状态的供应商项目 ID，下级由调用方按项目再加载。 */
-    List<String> findSupplierProjectIds(Long supplierId, SaleStatusEnum saleStatus);
+    Optional<ApiProjectAggregate> find(Long id);
 
-    /** 下级拉取用。带出已落库场次和票品，才能把本次没返回的标成停售。 */
-    Optional<ApiProjectAggregate> findWithChildren(Long supplierId, String supplierProjectId);
+    /**
+     * 只返回指定售卖状态、且主键落在该分片的项目主键。
+     * 取模用表主键，不用供应商项目号。供应商项目号可能是 UUID 或任意字符串。
+     */
+    List<Long> findIds(Long supplierId, SaleStatusEnum saleStatus, int shardIndex, int shardTotal);
+
+    /**
+     * 下级拉取用。只装本次要对齐的场次：供应商本次返回的，加上库里仍在售、这次没返回的。
+     * 已停售的历史场次不进聚合。在售场次带全部票品，才能把本次没返回的票品标停售。
+     */
+    Optional<ApiProjectAggregate> findForChildPull(Long id, List<String> supplierSessionIds);
 
     List<ApiProjectAggregate> findBySupplier(Long supplierId);
 

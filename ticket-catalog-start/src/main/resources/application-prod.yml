@@ -11,6 +11,16 @@ thread:
         keep-alive-time: 5000
         block-queue-size: 5000
         policy: CallerRunsPolicy
+    supplier:
+      child:
+        pull:
+          config:
+            core-pool-size: 16
+            max-pool-size: 16
+            keep-alive-time: 60
+            block-queue-size: 64
+            per-supplier-in-flight: 4
+            policy: AbortPolicy
 
 # 数据库配置
 #spring:

@@ -10,6 +10,8 @@ public interface IApiSessionDao {
 
     int insert(ApiSession apiSession);
 
+    int insertBatch(List<ApiSession> sessions);
+
     int update(ApiSession apiSession);
 
     ApiSession selectById(Long id);
@@ -17,5 +19,8 @@ public interface IApiSessionDao {
     ApiSession selectBySupplierSessionId(Long supplierId, String supplierSessionId);
 
     List<ApiSession> selectByProjectId(Long projectId);
+
+    /** 本次返回的场次，加上该项目下仍在售的场次。已停售且本次没返回的不查。 */
+    List<ApiSession> selectForChildPull(Long projectId, Integer onSale, List<String> supplierSessionIds);
 
 }

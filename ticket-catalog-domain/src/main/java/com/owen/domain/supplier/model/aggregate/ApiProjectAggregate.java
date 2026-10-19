@@ -93,8 +93,8 @@ public class ApiProjectAggregate {
     }
 
     /**
-     * 用本次拉取的场次全量对齐。本次没返回的场次连同其票品一起停售。
-     * 场次起止时间由场次本身重算，不采信供应商项目上的时间。
+     * 用本次拉取的场次对齐已装入的场次。本次没返回、但仍在售的场次连同其票品一起停售。
+     * 已停售的历史场次不在本对象里，不能靠这里重算项目的场次时间窗口。
      */
     public void syncSessions(List<RawSessionVO> raws) {
         List<String> incoming = new ArrayList<>();
@@ -113,7 +113,6 @@ public class ApiProjectAggregate {
         sessions.values().stream()
                 .filter(session -> !incoming.contains(session.getSupplierSessionId()))
                 .forEach(ApiSessionEntity::stopSale);
-        recomputeSessionWindow();
     }
 
     public void attach(ApiSessionEntity session) {
@@ -131,17 +130,6 @@ public class ApiProjectAggregate {
             throw new IllegalArgumentException("场次不存在: " + supplierSessionId);
         }
         session.assignId(sessionId);
-    }
-
-    private void recomputeSessionWindow() {
-        this.earliestSessionStartTime = sessions.values().stream()
-                .map(ApiSessionEntity::getSessionStartTime)
-                .min(LocalDateTime::compareTo)
-                .orElse(null);
-        this.latestSessionStartTime = sessions.values().stream()
-                .map(ApiSessionEntity::getSessionStartTime)
-                .max(LocalDateTime::compareTo)
-                .orElse(null);
     }
 
     public Long getId() {

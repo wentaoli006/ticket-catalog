@@ -75,11 +75,24 @@
         WHERE supplier_id = #{supplierId}
     </select>
 
-    <select id="selectSupplierProjectIds" resultType="java.lang.String">
-        SELECT supplier_project_id
+    <update id="refreshSessionWindow" parameterType="java.lang.Long">
+        UPDATE api_project
+        SET earliest_session_start_time = (
+                SELECT MIN(session_start_time) FROM api_session WHERE project_id = #{projectId}
+            ),
+            latest_session_start_time = (
+                SELECT MAX(session_start_time) FROM api_session WHERE project_id = #{projectId}
+            ),
+            update_time = now()
+        WHERE id = #{projectId}
+    </update>
+
+    <select id="selectIds" resultType="java.lang.Long">
+        SELECT id
         FROM api_project
         WHERE supplier_id = #{supplierId}
           AND sale_status = #{saleStatus}
+          AND MOD(id, #{shardTotal}) = #{shardIndex}
     </select>
 
 </mapper>
